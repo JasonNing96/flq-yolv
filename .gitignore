@@ -1,0 +1,7 @@
+runs_flq/
+outputs/   
+results/
+models/
+flq_minimal_out/
+flq_yolov_out/ 
+data/

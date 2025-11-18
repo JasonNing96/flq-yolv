@@ -1,0 +1,44 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug FLQ YOLOv2 (yolo.sh)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/flq_yolov_v2.py",
+            "args": [
+                "--clients",
+                "./data/oil_detection_dataset/client1/oil.yaml",
+                "./data/oil_detection_dataset/client2/oil.yaml",
+                "./data/oil_detection_dataset/client3/oil.yaml",
+                "./data/oil_detection_dataset/client4/oil.yaml",
+                "./data/oil_detection_dataset/client5/oil.yaml",
+                "./data/oil_detection_dataset/client6/oil.yaml",
+                "--val-data",
+                "./data/oil_detection_dataset/data.yaml",
+                "--model",
+                "./models/yolov8n.pt",
+                "--rounds",
+                "10",
+                "--local-epochs",
+                "1",
+                "--bits",
+                "8"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": false
+        }
+    ]
+}

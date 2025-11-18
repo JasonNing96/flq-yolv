@@ -1,0 +1,35 @@
+# python flq_yolo_v2.py \
+#   --clients ./data/oil_detection_dataset/client1/oil.yaml \
+#   --val-data ./data/oil_detection_dataset/data.yaml \
+#   --model ./models/yolov8n.pt \
+#   --rounds 2 \
+#   --local-epochs 1 \
+#   --bits 8 \
+#   --batch 8
+
+python flq_yolov_v2.py \
+  --clients ./data/oil_detection_dataset/client1/oil.yaml \
+           ./data/oil_detection_dataset/client2/oil.yaml \
+           ./data/oil_detection_dataset/client3/oil.yaml \
+           ./data/oil_detection_dataset/client4/oil.yaml \
+           ./data/oil_detection_dataset/client5/oil.yaml \
+           ./data/oil_detection_dataset/client6/oil.yaml \
+  --val-data ./data/oil_detection_dataset/data.yaml \
+  --model ./models/yolov8n.pt \
+  --rounds 10 \
+  --local-epochs 2 \
+  --bits 8 \
+  --workers 0
+
+# python flq_yolo_v2.py \
+#   --clients ./data/oil_detection_dataset/client1/oil.yaml \
+#            ./data/oil_detection_dataset/client2/oil.yaml \
+#            ./data/oil_detection_dataset/client3/oil.yaml \
+#            ./data/oil_detection_dataset/client4/oil.yaml \
+#            ./data/oil_detection_dataset/client5/oil.yaml \
+#            ./data/oil_detection_dataset/client6/oil.yaml \
+#   --val-data ./data/oil_detection_dataset/data.yaml \
+#   --model ./models/yolov8n.pt \
+#   --rounds 100 \
+#   --local-epochs 1 \
+#   --bits 8
