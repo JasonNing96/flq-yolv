@@ -1,0 +1,1709 @@
+🚀 FLQ-YOLOv6 (Paper Exp Version) | Device: cuda:0 | Bits: 32
+   [Init] Adapting model head (Warmup)...
+New https://pypi.org/project/ultralytics/8.3.229 available 😃 Update with 'pip install -U ultralytics'
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+[34m[1mengine/trainer: [0mtask=detect, mode=train, model=models/yolov8n.pt, data=data/oil_detection_dataset/data.yaml, epochs=1, time=None, patience=100, batch=32, imgsz=640, save=True, save_period=-1, cache=False, device=cuda:0, workers=8, project=results/runs_flq_v6/warmup_temp, name=init_run, exist_ok=True, pretrained=True, optimizer=auto, verbose=False, seed=0, deterministic=True, single_cls=False, rect=False, cos_lr=False, close_mosaic=10, resume=False, amp=True, fraction=1.0, profile=False, freeze=None, multi_scale=False, overlap_mask=True, mask_ratio=4, dropout=0.0, val=False, split=val, save_json=False, save_hybrid=False, conf=None, iou=0.7, max_det=300, half=False, dnn=False, plots=False, source=None, vid_stride=1, stream_buffer=False, visualize=False, augment=False, agnostic_nms=False, classes=None, retina_masks=False, embed=None, show=False, save_frames=False, save_txt=False, save_conf=False, save_crop=False, show_labels=True, show_conf=True, show_boxes=True, line_width=None, format=torchscript, keras=False, optimize=False, int8=False, dynamic=False, simplify=True, opset=None, workspace=None, nms=False, lr0=0.01, lrf=0.01, momentum=0.937, weight_decay=0.0005, warmup_epochs=3.0, warmup_momentum=0.8, warmup_bias_lr=0.1, box=7.5, cls=0.5, dfl=1.5, pose=12.0, kobj=1.0, nbs=64, hsv_h=0.015, hsv_s=0.7, hsv_v=0.4, degrees=0.0, translate=0.1, scale=0.5, shear=0.0, perspective=0.0, flipud=0.0, fliplr=0.5, bgr=0.0, mosaic=1.0, mixup=0.0, copy_paste=0.0, copy_paste_mode=flip, auto_augment=randaugment, erasing=0.4, crop_fraction=1.0, cfg=None, tracker=botsort.yaml, save_dir=results/runs_flq_v6/warmup_temp/init_run
+Overriding model.yaml nc=80 with nc=2
+
+                   from  n    params  module                                       arguments                     
+  0                  -1  1       464  ultralytics.nn.modules.conv.Conv             [3, 16, 3, 2]                 
+  1                  -1  1      4672  ultralytics.nn.modules.conv.Conv             [16, 32, 3, 2]                
+  2                  -1  1      7360  ultralytics.nn.modules.block.C2f             [32, 32, 1, True]             
+  3                  -1  1     18560  ultralytics.nn.modules.conv.Conv             [32, 64, 3, 2]                
+  4                  -1  2     49664  ultralytics.nn.modules.block.C2f             [64, 64, 2, True]             
+  5                  -1  1     73984  ultralytics.nn.modules.conv.Conv             [64, 128, 3, 2]               
+  6                  -1  2    197632  ultralytics.nn.modules.block.C2f             [128, 128, 2, True]           
+  7                  -1  1    295424  ultralytics.nn.modules.conv.Conv             [128, 256, 3, 2]              
+  8                  -1  1    460288  ultralytics.nn.modules.block.C2f             [256, 256, 1, True]           
+  9                  -1  1    164608  ultralytics.nn.modules.block.SPPF            [256, 256, 5]                 
+ 10                  -1  1         0  torch.nn.modules.upsampling.Upsample         [None, 2, 'nearest']          
+ 11             [-1, 6]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 12                  -1  1    148224  ultralytics.nn.modules.block.C2f             [384, 128, 1]                 
+ 13                  -1  1         0  torch.nn.modules.upsampling.Upsample         [None, 2, 'nearest']          
+ 14             [-1, 4]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 15                  -1  1     37248  ultralytics.nn.modules.block.C2f             [192, 64, 1]                  
+ 16                  -1  1     36992  ultralytics.nn.modules.conv.Conv             [64, 64, 3, 2]                
+ 17            [-1, 12]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 18                  -1  1    123648  ultralytics.nn.modules.block.C2f             [192, 128, 1]                 
+ 19                  -1  1    147712  ultralytics.nn.modules.conv.Conv             [128, 128, 3, 2]              
+ 20             [-1, 9]  1         0  ultralytics.nn.modules.conv.Concat           [1]                           
+ 21                  -1  1    493056  ultralytics.nn.modules.block.C2f             [384, 256, 1]                 
+ 22        [15, 18, 21]  1    751702  ultralytics.nn.modules.head.Detect           [2, [64, 128, 256]]           
+Model summary: 225 layers, 3,011,238 parameters, 3,011,222 gradients, 8.2 GFLOPs
+
+Transferred 319/355 items from pretrained weights
+Freezing layer 'model.22.dfl.conv.weight'
+[34m[1mAMP: [0mrunning Automatic Mixed Precision (AMP) checks...
+[34m[1mAMP: [0mchecks passed ✅
+[34m[1moptimizer:[0m 'optimizer=auto' found, ignoring 'lr0=0.01' and 'momentum=0.937' and determining best 'optimizer', 'lr0' and 'momentum' automatically... 
+[34m[1moptimizer:[0m AdamW(lr=0.001667, momentum=0.9) with parameter groups 57 weight(decay=0.0), 64 weight(decay=0.0005), 63 bias(decay=0.0)
+Image sizes 640 train, 640 val
+Using 8 dataloader workers
+Logging results to [1mresults/runs_flq_v6/warmup_temp/init_run[0m
+Starting training for 1 epochs...
+
+      Epoch    GPU_mem   box_loss   cls_loss   dfl_loss  Instances       Size
+                   all        164        239      0.483      0.164      0.133     0.0513
+
+1 epochs completed in 0.003 hours.
+Optimizer stripped from results/runs_flq_v6/warmup_temp/init_run/weights/last.pt, 6.2MB
+Optimizer stripped from results/runs_flq_v6/warmup_temp/init_run/weights/best.pt, 6.2MB
+
+Validating results/runs_flq_v6/warmup_temp/init_run/weights/best.pt...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.462      0.164      0.133     0.0514
+Speed: 0.4ms preprocess, 0.6ms inference, 0.0ms loss, 0.9ms postprocess per image
+
+========== Round 0 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.017s
+   [Client 0] Loss: 1.1342 | Up: 96.69 Mb | Lat: 37.039s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.818       0.28      0.397      0.221
+Speed: 0.4ms preprocess, 0.8ms inference, 0.0ms loss, 0.8ms postprocess per image
+   [Save] New Best Model (mAP50=0.3969)
+   [Result] mAP50: 0.3969 | Loss: 1.1148 | Time: 43.1s
+
+========== Round 1 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.429s
+   [Client 0] Loss: 1.0125 | Up: 96.69 Mb | Lat: 30.359s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.496      0.419      0.488      0.302
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Save] New Best Model (mAP50=0.4884)
+   [Result] mAP50: 0.4884 | Loss: 1.0206 | Time: 82.6s
+
+========== Round 2 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 32.348s
+   [Client 0] Loss: 0.9975 | Up: 96.69 Mb | Lat: 31.841s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.613      0.439      0.521      0.316
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.6ms postprocess per image
+   [Save] New Best Model (mAP50=0.5207)
+   [Result] mAP50: 0.5207 | Loss: 0.9880 | Time: 82.7s
+
+========== Round 3 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.581s
+   [Client 0] Loss: 0.9440 | Up: 96.69 Mb | Lat: 36.710s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.617      0.502      0.583      0.321
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.5ms postprocess per image
+   [Save] New Best Model (mAP50=0.5827)
+   [Result] mAP50: 0.5827 | Loss: 0.9490 | Time: 82.7s
+
+========== Round 4 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 40.257s
+   [Client 0] Loss: 0.9595 | Up: 96.69 Mb | Lat: 38.436s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.611      0.571      0.575      0.338
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Result] mAP50: 0.5749 | Loss: 0.9358 | Time: 82.7s
+
+========== Round 5 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.599s
+   [Client 0] Loss: 0.9039 | Up: 96.69 Mb | Lat: 10.413s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.682      0.515      0.587      0.355
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Save] New Best Model (mAP50=0.5865)
+   [Result] mAP50: 0.5865 | Loss: 0.9120 | Time: 82.7s
+
+========== Round 6 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 41.405s
+   [Client 0] Loss: 0.8866 | Up: 96.69 Mb | Lat: 25.454s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.677      0.542      0.622      0.383
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Save] New Best Model (mAP50=0.6222)
+   [Result] mAP50: 0.6222 | Loss: 0.9017 | Time: 82.7s
+
+========== Round 7 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.170s
+   [Client 0] Loss: 0.8647 | Up: 96.69 Mb | Lat: 15.501s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.654      0.556      0.621      0.385
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Result] mAP50: 0.6212 | Loss: 0.8764 | Time: 82.7s
+
+========== Round 8 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.760s
+   [Client 0] Loss: 0.8490 | Up: 96.69 Mb | Lat: 19.150s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.743      0.551      0.684      0.421
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Save] New Best Model (mAP50=0.6837)
+   [Result] mAP50: 0.6837 | Loss: 0.8820 | Time: 82.8s
+
+========== Round 9 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 24.228s
+   [Client 0] Loss: 0.8671 | Up: 96.69 Mb | Lat: 32.009s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.748      0.616      0.705      0.433
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Save] New Best Model (mAP50=0.7046)
+   [Result] mAP50: 0.7046 | Loss: 0.8631 | Time: 82.8s
+
+========== Round 10 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 36.214s
+   [Client 0] Loss: 0.8510 | Up: 96.69 Mb | Lat: 16.537s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.648      0.656      0.718      0.435
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Save] New Best Model (mAP50=0.7183)
+   [Result] mAP50: 0.7183 | Loss: 0.8489 | Time: 82.9s
+
+========== Round 11 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.654s
+   [Client 0] Loss: 0.8362 | Up: 96.69 Mb | Lat: 12.336s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.782       0.55      0.659      0.417
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6587 | Loss: 0.8564 | Time: 82.8s
+
+========== Round 12 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.490s
+   [Client 0] Loss: 0.8488 | Up: 96.69 Mb | Lat: 25.099s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.82      0.623      0.718       0.44
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Save] New Best Model (mAP50=0.7185)
+   [Result] mAP50: 0.7185 | Loss: 0.8436 | Time: 82.7s
+
+========== Round 13 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.878s
+   [Client 0] Loss: 0.8439 | Up: 96.69 Mb | Lat: 12.542s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.784      0.568      0.688      0.425
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Result] mAP50: 0.6880 | Loss: 0.8412 | Time: 82.9s
+
+========== Round 14 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 48.182s
+   [Client 0] Loss: 0.8164 | Up: 96.69 Mb | Lat: 11.832s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.725      0.607      0.704       0.45
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Result] mAP50: 0.7041 | Loss: 0.8288 | Time: 82.8s
+
+========== Round 15 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.406s
+   [Client 0] Loss: 0.8265 | Up: 96.69 Mb | Lat: 21.166s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.743      0.607      0.679      0.427
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6793 | Loss: 0.8298 | Time: 82.7s
+
+========== Round 16 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 32.813s
+   [Client 0] Loss: 0.7814 | Up: 96.69 Mb | Lat: 13.588s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.698       0.62      0.679      0.432
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6790 | Loss: 0.8157 | Time: 82.8s
+
+========== Round 17 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.840s
+   [Client 0] Loss: 0.8090 | Up: 96.69 Mb | Lat: 15.907s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.724      0.594      0.665      0.432
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6654 | Loss: 0.8104 | Time: 82.7s
+
+========== Round 18 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.195s
+   [Client 0] Loss: 0.8030 | Up: 96.69 Mb | Lat: 23.321s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.697      0.665      0.694      0.449
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6945 | Loss: 0.8111 | Time: 82.8s
+
+========== Round 19 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 19.597s
+   [Client 0] Loss: 0.8036 | Up: 96.69 Mb | Lat: 14.232s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.674      0.725      0.716       0.45
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.4ms postprocess per image
+   [Result] mAP50: 0.7155 | Loss: 0.7962 | Time: 82.8s
+
+========== Round 20 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.048s
+   [Client 0] Loss: 0.8088 | Up: 96.69 Mb | Lat: 28.456s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.78       0.62      0.712      0.444
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7123 | Loss: 0.7968 | Time: 82.8s
+
+========== Round 21 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.009s
+   [Client 0] Loss: 0.7487 | Up: 96.69 Mb | Lat: 15.504s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.654      0.696      0.679      0.442
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6790 | Loss: 0.7802 | Time: 82.8s
+
+========== Round 22 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.540s
+   [Client 0] Loss: 0.7711 | Up: 96.69 Mb | Lat: 10.928s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.677      0.732      0.686      0.439
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6865 | Loss: 0.7868 | Time: 82.8s
+
+========== Round 23 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.556s
+   [Client 0] Loss: 0.7797 | Up: 96.69 Mb | Lat: 12.996s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.668      0.692      0.687       0.44
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6871 | Loss: 0.7778 | Time: 82.9s
+
+========== Round 24 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 24.156s
+   [Client 0] Loss: 0.7530 | Up: 96.69 Mb | Lat: 29.311s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.647      0.692      0.688      0.442
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6884 | Loss: 0.7735 | Time: 82.8s
+
+========== Round 25 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.031s
+   [Client 0] Loss: 0.7677 | Up: 96.69 Mb | Lat: 18.172s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.649      0.685      0.669      0.443
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6693 | Loss: 0.7742 | Time: 82.8s
+
+========== Round 26 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 22.124s
+   [Client 0] Loss: 0.7700 | Up: 96.69 Mb | Lat: 12.223s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.666      0.679      0.703      0.447
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7028 | Loss: 0.7673 | Time: 82.9s
+
+========== Round 27 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 9.805s
+   [Client 0] Loss: 0.7559 | Up: 96.69 Mb | Lat: 47.578s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.753      0.663       0.73      0.469
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Save] New Best Model (mAP50=0.7298)
+   [Result] mAP50: 0.7298 | Loss: 0.7589 | Time: 82.9s
+
+========== Round 28 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.159s
+   [Client 0] Loss: 0.7778 | Up: 96.69 Mb | Lat: 21.952s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.748      0.663       0.76      0.469
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Save] New Best Model (mAP50=0.7601)
+   [Result] mAP50: 0.7601 | Loss: 0.7605 | Time: 82.9s
+
+========== Round 29 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 31.259s
+   [Client 0] Loss: 0.7447 | Up: 96.69 Mb | Lat: 16.401s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.726      0.722      0.724      0.475
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7236 | Loss: 0.7526 | Time: 82.9s
+
+========== Round 30 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.574s
+   [Client 0] Loss: 0.7510 | Up: 96.69 Mb | Lat: 12.532s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.739       0.66      0.721      0.455
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7207 | Loss: 0.7637 | Time: 82.8s
+
+========== Round 31 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 19.890s
+   [Client 0] Loss: 0.7531 | Up: 96.69 Mb | Lat: 19.299s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.784      0.649      0.695      0.461
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6948 | Loss: 0.7527 | Time: 82.7s
+
+========== Round 32 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 9.856s
+   [Client 0] Loss: 0.7561 | Up: 96.69 Mb | Lat: 17.140s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.672      0.734      0.721      0.472
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7213 | Loss: 0.7521 | Time: 82.8s
+
+========== Round 33 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 27.272s
+   [Client 0] Loss: 0.7526 | Up: 96.69 Mb | Lat: 27.121s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.647      0.705      0.692      0.461
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.6917 | Loss: 0.7466 | Time: 82.9s
+
+========== Round 34 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 26.850s
+   [Client 0] Loss: 0.7511 | Up: 96.69 Mb | Lat: 15.930s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.717      0.631      0.709      0.468
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7093 | Loss: 0.7410 | Time: 82.8s
+
+========== Round 35 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 31.905s
+   [Client 0] Loss: 0.7310 | Up: 96.69 Mb | Lat: 12.722s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.761      0.692      0.734      0.482
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7335 | Loss: 0.7330 | Time: 82.9s
+
+========== Round 36 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 27.853s
+   [Client 0] Loss: 0.7326 | Up: 96.69 Mb | Lat: 14.768s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.692      0.669        0.7      0.463
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7005 | Loss: 0.7366 | Time: 82.8s
+
+========== Round 37 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.134s
+   [Client 0] Loss: 0.7240 | Up: 96.69 Mb | Lat: 11.460s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.723       0.73      0.719      0.487
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7193 | Loss: 0.7368 | Time: 82.8s
+
+========== Round 38 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.457s
+   [Client 0] Loss: 0.7217 | Up: 96.69 Mb | Lat: 15.605s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.669      0.701      0.717      0.472
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7168 | Loss: 0.7317 | Time: 82.9s
+
+========== Round 39 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.444s
+   [Client 0] Loss: 0.7264 | Up: 96.69 Mb | Lat: 21.545s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.774      0.703      0.728      0.469
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7283 | Loss: 0.7287 | Time: 82.9s
+
+========== Round 40 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.768s
+   [Client 0] Loss: 0.7008 | Up: 96.69 Mb | Lat: 19.524s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.737      0.706      0.734       0.48
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7338 | Loss: 0.7290 | Time: 82.7s
+
+========== Round 41 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 25.256s
+   [Client 0] Loss: 0.7284 | Up: 96.69 Mb | Lat: 22.009s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.745      0.696      0.722      0.496
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7223 | Loss: 0.7280 | Time: 83.0s
+
+========== Round 42 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.115s
+   [Client 0] Loss: 0.7005 | Up: 96.69 Mb | Lat: 11.127s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.749      0.727       0.74        0.5
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7396 | Loss: 0.7089 | Time: 82.9s
+
+========== Round 43 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.917s
+   [Client 0] Loss: 0.7166 | Up: 96.69 Mb | Lat: 17.057s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.772      0.727      0.738      0.494
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7379 | Loss: 0.7179 | Time: 82.9s
+
+========== Round 44 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.359s
+   [Client 0] Loss: 0.7305 | Up: 96.69 Mb | Lat: 11.948s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.731      0.734       0.72      0.481
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7203 | Loss: 0.7263 | Time: 83.0s
+
+========== Round 45 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.400s
+   [Client 0] Loss: 0.7304 | Up: 96.69 Mb | Lat: 21.396s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.759      0.674      0.712      0.482
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7119 | Loss: 0.7319 | Time: 83.1s
+
+========== Round 46 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 22.305s
+   [Client 0] Loss: 0.7094 | Up: 96.69 Mb | Lat: 40.452s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.736      0.761      0.719      0.486
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7189 | Loss: 0.7055 | Time: 83.0s
+
+========== Round 47 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.487s
+   [Client 0] Loss: 0.7167 | Up: 96.69 Mb | Lat: 14.470s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.787      0.718      0.739      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7393 | Loss: 0.7177 | Time: 82.8s
+
+========== Round 48 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 28.190s
+   [Client 0] Loss: 0.7133 | Up: 96.69 Mb | Lat: 31.333s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.692      0.741      0.741      0.494
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7411 | Loss: 0.7289 | Time: 82.8s
+
+========== Round 49 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.577s
+   [Client 0] Loss: 0.7257 | Up: 96.69 Mb | Lat: 12.191s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.739        0.7      0.723      0.499
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7232 | Loss: 0.7217 | Time: 83.0s
+
+========== Round 50 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.030s
+   [Client 0] Loss: 0.6861 | Up: 96.69 Mb | Lat: 12.501s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.767      0.701      0.727      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7273 | Loss: 0.7019 | Time: 82.9s
+
+========== Round 51 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.990s
+   [Client 0] Loss: 0.7004 | Up: 96.69 Mb | Lat: 12.323s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.744      0.725      0.733      0.502
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7334 | Loss: 0.7123 | Time: 82.9s
+
+========== Round 52 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.038s
+   [Client 0] Loss: 0.6867 | Up: 96.69 Mb | Lat: 16.020s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.777       0.73      0.776      0.496
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Save] New Best Model (mAP50=0.7756)
+   [Result] mAP50: 0.7756 | Loss: 0.7090 | Time: 83.0s
+
+========== Round 53 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 24.966s
+   [Client 0] Loss: 0.6957 | Up: 96.69 Mb | Lat: 23.532s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.78      0.735      0.757      0.515
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7571 | Loss: 0.7020 | Time: 82.8s
+
+========== Round 54 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.410s
+   [Client 0] Loss: 0.7083 | Up: 96.69 Mb | Lat: 11.194s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.745      0.709      0.725      0.504
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7248 | Loss: 0.6967 | Time: 82.9s
+
+========== Round 55 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.892s
+   [Client 0] Loss: 0.6836 | Up: 96.69 Mb | Lat: 10.423s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.735      0.739      0.737       0.51
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7373 | Loss: 0.6990 | Time: 82.9s
+
+========== Round 56 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.610s
+   [Client 0] Loss: 0.6789 | Up: 96.69 Mb | Lat: 12.581s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.793      0.768      0.767      0.513
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7665 | Loss: 0.6952 | Time: 82.8s
+
+========== Round 57 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 28.636s
+   [Client 0] Loss: 0.7010 | Up: 96.69 Mb | Lat: 24.102s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.777      0.737      0.734      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7337 | Loss: 0.7108 | Time: 82.9s
+
+========== Round 58 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 45.257s
+   [Client 0] Loss: 0.6757 | Up: 96.69 Mb | Lat: 26.030s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.75      0.707      0.724      0.498
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7241 | Loss: 0.6963 | Time: 82.9s
+
+========== Round 59 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 43.101s
+   [Client 0] Loss: 0.6847 | Up: 96.69 Mb | Lat: 22.180s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.716      0.727      0.721      0.501
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7208 | Loss: 0.7112 | Time: 82.8s
+
+========== Round 60 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.315s
+   [Client 0] Loss: 0.6923 | Up: 96.69 Mb | Lat: 14.121s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.737      0.703       0.72      0.505
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7203 | Loss: 0.6963 | Time: 82.8s
+
+========== Round 61 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 54.151s
+   [Client 0] Loss: 0.6910 | Up: 96.69 Mb | Lat: 50.717s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239        0.8      0.761      0.775      0.514
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7748 | Loss: 0.6919 | Time: 82.9s
+
+========== Round 62 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.047s
+   [Client 0] Loss: 0.6743 | Up: 96.69 Mb | Lat: 15.275s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.753      0.736      0.735      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7348 | Loss: 0.6930 | Time: 83.0s
+
+========== Round 63 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 23.386s
+   [Client 0] Loss: 0.6845 | Up: 96.69 Mb | Lat: 35.162s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.786      0.734      0.765      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7651 | Loss: 0.6939 | Time: 83.0s
+
+========== Round 64 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 41.554s
+   [Client 0] Loss: 0.6822 | Up: 96.69 Mb | Lat: 16.843s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.801      0.772       0.77      0.503
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7696 | Loss: 0.7014 | Time: 82.8s
+
+========== Round 65 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.267s
+   [Client 0] Loss: 0.6767 | Up: 96.69 Mb | Lat: 24.453s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.805      0.737      0.736      0.505
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7362 | Loss: 0.6939 | Time: 82.9s
+
+========== Round 66 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 42.012s
+   [Client 0] Loss: 0.6820 | Up: 96.69 Mb | Lat: 22.353s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.781       0.76      0.765      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7652 | Loss: 0.6951 | Time: 82.8s
+
+========== Round 67 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.600s
+   [Client 0] Loss: 0.6941 | Up: 96.69 Mb | Lat: 19.795s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239        0.8      0.761      0.766      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7663 | Loss: 0.6854 | Time: 83.1s
+
+========== Round 68 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.735s
+   [Client 0] Loss: 0.6861 | Up: 96.69 Mb | Lat: 11.877s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.749      0.741      0.726      0.504
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7257 | Loss: 0.6987 | Time: 82.7s
+
+========== Round 69 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 25.228s
+   [Client 0] Loss: 0.6963 | Up: 96.69 Mb | Lat: 11.971s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.768      0.763      0.749      0.502
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7489 | Loss: 0.6891 | Time: 82.9s
+
+========== Round 70 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.981s
+   [Client 0] Loss: 0.6977 | Up: 96.69 Mb | Lat: 16.344s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.778      0.763      0.756      0.499
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7557 | Loss: 0.7022 | Time: 83.1s
+
+========== Round 71 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.372s
+   [Client 0] Loss: 0.6710 | Up: 96.69 Mb | Lat: 15.710s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.737      0.741      0.716      0.494
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7160 | Loss: 0.6925 | Time: 82.8s
+
+========== Round 72 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.649s
+   [Client 0] Loss: 0.6671 | Up: 96.69 Mb | Lat: 56.670s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.74      0.741      0.756      0.497
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7555 | Loss: 0.6763 | Time: 82.8s
+
+========== Round 73 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 46.955s
+   [Client 0] Loss: 0.6889 | Up: 96.69 Mb | Lat: 11.910s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.756      0.735      0.718      0.505
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7184 | Loss: 0.6824 | Time: 82.8s
+
+========== Round 74 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 31.504s
+   [Client 0] Loss: 0.7009 | Up: 96.69 Mb | Lat: 15.456s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.752      0.748      0.725      0.503
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7253 | Loss: 0.7043 | Time: 82.9s
+
+========== Round 75 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 28.639s
+   [Client 0] Loss: 0.6842 | Up: 96.69 Mb | Lat: 12.979s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.754      0.739      0.714      0.497
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7136 | Loss: 0.6909 | Time: 82.8s
+
+========== Round 76 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.851s
+   [Client 0] Loss: 0.6722 | Up: 96.69 Mb | Lat: 23.306s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.787      0.743       0.72      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7200 | Loss: 0.6841 | Time: 83.0s
+
+========== Round 77 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.424s
+   [Client 0] Loss: 0.6624 | Up: 96.69 Mb | Lat: 10.684s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.784       0.77      0.761        0.5
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7607 | Loss: 0.6862 | Time: 82.8s
+
+========== Round 78 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 21.370s
+   [Client 0] Loss: 0.6592 | Up: 96.69 Mb | Lat: 17.982s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.787      0.701      0.725      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7251 | Loss: 0.6787 | Time: 82.8s
+
+========== Round 79 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.446s
+   [Client 0] Loss: 0.6688 | Up: 96.69 Mb | Lat: 30.058s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.822      0.772      0.758      0.499
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7581 | Loss: 0.6824 | Time: 82.9s
+
+========== Round 80 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.226s
+   [Client 0] Loss: 0.6542 | Up: 96.69 Mb | Lat: 14.836s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.813      0.777      0.768      0.501
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7683 | Loss: 0.6804 | Time: 83.0s
+
+========== Round 81 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 27.095s
+   [Client 0] Loss: 0.6873 | Up: 96.69 Mb | Lat: 14.411s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.798      0.762      0.765      0.513
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7645 | Loss: 0.6891 | Time: 83.1s
+
+========== Round 82 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 27.850s
+   [Client 0] Loss: 0.6667 | Up: 96.69 Mb | Lat: 11.334s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.762      0.768      0.756      0.503
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7555 | Loss: 0.6848 | Time: 83.2s
+
+========== Round 83 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 30.292s
+   [Client 0] Loss: 0.6689 | Up: 96.69 Mb | Lat: 15.710s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.812      0.739      0.765      0.513
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7651 | Loss: 0.6768 | Time: 83.1s
+
+========== Round 84 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.836s
+   [Client 0] Loss: 0.6628 | Up: 96.69 Mb | Lat: 13.431s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.797      0.736      0.772      0.509
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7716 | Loss: 0.6780 | Time: 83.2s
+
+========== Round 85 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.453s
+   [Client 0] Loss: 0.6694 | Up: 96.69 Mb | Lat: 32.514s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.806      0.781      0.772      0.499
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7716 | Loss: 0.6789 | Time: 83.3s
+
+========== Round 86 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.611s
+   [Client 0] Loss: 0.6772 | Up: 96.69 Mb | Lat: 19.053s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.819      0.731      0.764      0.509
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7642 | Loss: 0.6881 | Time: 83.0s
+
+========== Round 87 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 9.933s
+   [Client 0] Loss: 0.6759 | Up: 96.69 Mb | Lat: 12.218s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.822      0.745      0.769      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7695 | Loss: 0.6787 | Time: 82.9s
+
+========== Round 88 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 34.323s
+   [Client 0] Loss: 0.6642 | Up: 96.69 Mb | Lat: 28.749s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.83      0.739      0.775      0.508
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7746 | Loss: 0.6805 | Time: 83.1s
+
+========== Round 89 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 27.388s
+   [Client 0] Loss: 0.6612 | Up: 96.69 Mb | Lat: 23.011s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.798      0.779      0.778      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Save] New Best Model (mAP50=0.7782)
+   [Result] mAP50: 0.7782 | Loss: 0.6846 | Time: 83.0s
+
+========== Round 90 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 28.593s
+   [Client 0] Loss: 0.6551 | Up: 96.69 Mb | Lat: 31.232s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.814      0.783      0.767      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7675 | Loss: 0.6744 | Time: 82.9s
+
+========== Round 91 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.900s
+   [Client 0] Loss: 0.6632 | Up: 96.69 Mb | Lat: 12.107s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.822      0.731      0.776      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7757 | Loss: 0.6754 | Time: 82.9s
+
+========== Round 92 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.946s
+   [Client 0] Loss: 0.6540 | Up: 96.69 Mb | Lat: 23.565s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.798      0.769      0.768      0.508
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7676 | Loss: 0.6708 | Time: 82.9s
+
+========== Round 93 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.245s
+   [Client 0] Loss: 0.6646 | Up: 96.69 Mb | Lat: 16.821s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.773      0.768      0.765      0.502
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7645 | Loss: 0.6801 | Time: 82.8s
+
+========== Round 94 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.613s
+   [Client 0] Loss: 0.6805 | Up: 96.69 Mb | Lat: 46.221s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.755      0.789      0.766      0.503
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7657 | Loss: inf | Time: 82.8s
+
+========== Round 95 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.920s
+   [Client 0] Loss: 0.6691 | Up: 96.69 Mb | Lat: 19.194s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.802      0.773      0.771        0.5
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7707 | Loss: 0.6740 | Time: 82.8s
+
+========== Round 96 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.412s
+   [Client 0] Loss: 0.6738 | Up: 96.69 Mb | Lat: 45.201s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.784      0.783      0.763      0.503
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7630 | Loss: 0.6872 | Time: 82.9s
+
+========== Round 97 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.936s
+   [Client 0] Loss: 0.6614 | Up: 96.69 Mb | Lat: 10.562s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.796      0.745      0.769      0.513
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7685 | Loss: 0.6732 | Time: 82.8s
+
+========== Round 98 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 32.168s
+   [Client 0] Loss: 0.6547 | Up: 96.69 Mb | Lat: 21.023s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.779      0.748      0.752      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7524 | Loss: 0.6758 | Time: 82.9s
+
+========== Round 99 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.699s
+   [Client 0] Loss: 0.6427 | Up: 96.69 Mb | Lat: 16.844s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.787      0.748      0.768      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7685 | Loss: 0.6731 | Time: 83.1s
+
+========== Round 100 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.866s
+   [Client 0] Loss: 0.6620 | Up: 96.69 Mb | Lat: 23.648s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.768       0.75      0.746      0.496
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7456 | Loss: 0.6766 | Time: 82.9s
+
+========== Round 101 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 37.917s
+   [Client 0] Loss: 0.6512 | Up: 96.69 Mb | Lat: 10.924s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.81      0.743      0.763      0.501
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7625 | Loss: 0.6631 | Time: 83.0s
+
+========== Round 102 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.677s
+   [Client 0] Loss: 0.6628 | Up: 96.69 Mb | Lat: 25.543s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.791      0.774      0.754      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7540 | Loss: 0.6805 | Time: 83.0s
+
+========== Round 103 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 22.633s
+   [Client 0] Loss: 0.6857 | Up: 96.69 Mb | Lat: 19.678s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.743      0.788      0.763      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7631 | Loss: 0.6669 | Time: 82.9s
+
+========== Round 104 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.594s
+   [Client 0] Loss: 0.6645 | Up: 96.69 Mb | Lat: 22.971s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.777      0.757      0.763      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7632 | Loss: 0.6813 | Time: 83.0s
+
+========== Round 105 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 33.247s
+   [Client 0] Loss: 0.6662 | Up: 96.69 Mb | Lat: 19.719s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.766      0.788      0.764      0.506
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7639 | Loss: 0.6738 | Time: 82.9s
+
+========== Round 106 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 25.529s
+   [Client 0] Loss: 0.6556 | Up: 96.69 Mb | Lat: 13.472s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.784      0.784      0.769      0.509
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7694 | Loss: 0.6685 | Time: 82.8s
+
+========== Round 107 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 23.252s
+   [Client 0] Loss: 0.6653 | Up: 96.69 Mb | Lat: 15.556s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.78      0.772      0.775      0.511
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7747 | Loss: 0.6718 | Time: 83.0s
+
+========== Round 108 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.638s
+   [Client 0] Loss: 0.6620 | Up: 96.69 Mb | Lat: 36.433s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.789      0.776      0.767      0.494
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7669 | Loss: 0.6703 | Time: 82.9s
+
+========== Round 109 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.388s
+   [Client 0] Loss: 0.6544 | Up: 96.69 Mb | Lat: 55.371s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.79      0.769      0.764      0.496
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7638 | Loss: 0.6726 | Time: 83.0s
+
+========== Round 110 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.514s
+   [Client 0] Loss: 0.6689 | Up: 96.69 Mb | Lat: 39.422s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.753      0.786      0.758       0.49
+Speed: 0.7ms preprocess, 1.6ms inference, 0.0ms loss, 2.6ms postprocess per image
+   [Result] mAP50: 0.7580 | Loss: 0.6782 | Time: 87.8s
+
+========== Round 111 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.671s
+   [Client 0] Loss: 0.6775 | Up: 96.69 Mb | Lat: 11.019s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.785      0.788      0.758      0.493
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.2ms postprocess per image
+   [Result] mAP50: 0.7584 | Loss: 0.6747 | Time: 82.9s
+
+========== Round 112 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.479s
+   [Client 0] Loss: 0.6720 | Up: 96.69 Mb | Lat: 15.670s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.769      0.772      0.763      0.514
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.2ms postprocess per image
+   [Result] mAP50: 0.7628 | Loss: 0.6735 | Time: 96.8s
+
+========== Round 113 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.348s
+   [Client 0] Loss: 0.6380 | Up: 96.69 Mb | Lat: 48.387s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.816      0.773       0.77      0.507
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 1.1ms postprocess per image
+   [Result] mAP50: 0.7701 | Loss: 0.6613 | Time: 99.1s
+
+========== Round 114 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 29.083s
+   [Client 0] Loss: 0.6641 | Up: 96.69 Mb | Lat: 30.619s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.797      0.748      0.758      0.488
+Speed: 0.6ms preprocess, 1.1ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Result] mAP50: 0.7575 | Loss: 0.6715 | Time: 90.0s
+
+========== Round 115 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.563s
+   [Client 0] Loss: 0.6442 | Up: 96.69 Mb | Lat: 9.820s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.812      0.772      0.775      0.505
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7748 | Loss: 0.6721 | Time: 87.9s
+
+========== Round 116 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 16.263s
+   [Client 0] Loss: 0.6621 | Up: 96.69 Mb | Lat: 18.128s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.811       0.77      0.782      0.512
+Speed: 0.6ms preprocess, 0.8ms inference, 0.0ms loss, 0.5ms postprocess per image
+   [Save] New Best Model (mAP50=0.7817)
+   [Result] mAP50: 0.7817 | Loss: 0.6816 | Time: 98.7s
+
+========== Round 117 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.991s
+   [Client 0] Loss: 0.6684 | Up: 96.69 Mb | Lat: 19.611s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.78       0.76      0.772      0.508
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.2ms postprocess per image
+   [Result] mAP50: 0.7721 | Loss: 0.6613 | Time: 98.7s
+
+========== Round 118 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.436s
+   [Client 0] Loss: 0.6549 | Up: 96.69 Mb | Lat: 18.850s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.779      0.788      0.775      0.503
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.0ms postprocess per image
+   [Result] mAP50: 0.7746 | Loss: 0.6800 | Time: 88.1s
+
+========== Round 119 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.342s
+   [Client 0] Loss: 0.6406 | Up: 96.69 Mb | Lat: 13.581s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.787      0.769       0.77      0.498
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7697 | Loss: 0.6675 | Time: 89.6s
+
+========== Round 120 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 14.948s
+   [Client 0] Loss: 0.6515 | Up: 96.69 Mb | Lat: 20.042s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.817      0.769      0.772      0.507
+Speed: 0.5ms preprocess, 1.0ms inference, 0.0ms loss, 0.9ms postprocess per image
+   [Result] mAP50: 0.7722 | Loss: 0.6644 | Time: 99.8s
+
+========== Round 121 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.018s
+   [Client 0] Loss: 0.6712 | Up: 96.69 Mb | Lat: 16.497s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239        0.8       0.77       0.77        0.5
+Speed: 0.5ms preprocess, 0.7ms inference, 0.0ms loss, 0.9ms postprocess per image
+   [Result] mAP50: 0.7703 | Loss: 0.6690 | Time: 97.6s
+
+========== Round 122 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 11.570s
+   [Client 0] Loss: 0.6616 | Up: 96.69 Mb | Lat: 10.564s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.812       0.77      0.769      0.503
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.0ms postprocess per image
+   [Result] mAP50: 0.7690 | Loss: 0.6698 | Time: 86.6s
+
+========== Round 123 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 50.396s
+   [Client 0] Loss: 0.6582 | Up: 96.69 Mb | Lat: 17.748s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.808      0.754      0.768      0.508
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7682 | Loss: 0.6628 | Time: 91.7s
+
+========== Round 124 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 36.234s
+   [Client 0] Loss: 0.6598 | Up: 96.69 Mb | Lat: 15.262s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.808      0.784      0.766      0.503
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.2ms postprocess per image
+   [Result] mAP50: 0.7663 | Loss: 0.6671 | Time: 99.4s
+
+========== Round 125 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.431s
+   [Client 0] Loss: 0.6506 | Up: 96.69 Mb | Lat: 15.198s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.764      0.757      0.766      0.502
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 0.8ms postprocess per image
+   [Result] mAP50: 0.7662 | Loss: 0.6714 | Time: 96.4s
+
+========== Round 126 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 10.095s
+   [Client 0] Loss: 0.6621 | Up: 96.69 Mb | Lat: 36.543s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.783      0.786      0.762      0.493
+Speed: 0.5ms preprocess, 1.0ms inference, 0.0ms loss, 0.8ms postprocess per image
+   [Result] mAP50: 0.7623 | Loss: 0.6619 | Time: 85.1s
+
+========== Round 127 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.262s
+   [Client 0] Loss: 0.6516 | Up: 96.69 Mb | Lat: 22.199s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.806      0.783      0.768      0.502
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7684 | Loss: 0.6606 | Time: 92.9s
+
+========== Round 128 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.788s
+   [Client 0] Loss: 0.6597 | Up: 96.69 Mb | Lat: 39.752s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.795      0.783      0.759      0.492
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Result] mAP50: 0.7593 | Loss: 0.6613 | Time: 99.1s
+
+========== Round 129 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.651s
+   [Client 0] Loss: 0.6596 | Up: 96.69 Mb | Lat: 15.206s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.775       0.79      0.759      0.491
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 1.1ms postprocess per image
+   [Result] mAP50: 0.7589 | Loss: 0.6708 | Time: 95.0s
+
+========== Round 130 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 19.304s
+   [Client 0] Loss: 0.6517 | Up: 96.69 Mb | Lat: 24.860s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.814      0.771      0.768      0.494
+Speed: 0.6ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7678 | Loss: 0.6777 | Time: 83.3s
+
+========== Round 131 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.112s
+   [Client 0] Loss: 0.6295 | Up: 96.69 Mb | Lat: 46.788s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.792      0.754      0.763      0.491
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7629 | Loss: 0.6593 | Time: 95.0s
+
+========== Round 132 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 21.415s
+   [Client 0] Loss: 0.6531 | Up: 96.69 Mb | Lat: 20.033s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.785      0.786      0.764      0.501
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Result] mAP50: 0.7643 | Loss: 0.6694 | Time: 100.1s
+
+========== Round 133 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.592s
+   [Client 0] Loss: 0.6591 | Up: 96.69 Mb | Lat: 24.191s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.774      0.788      0.756      0.498
+Speed: 0.5ms preprocess, 0.7ms inference, 0.0ms loss, 1.4ms postprocess per image
+   [Result] mAP50: 0.7561 | Loss: 0.6612 | Time: 92.5s
+
+========== Round 134 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.407s
+   [Client 0] Loss: 0.6343 | Up: 96.69 Mb | Lat: 21.691s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.786      0.768       0.76      0.492
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7603 | Loss: 0.6602 | Time: 85.6s
+
+========== Round 135 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 12.204s
+   [Client 0] Loss: 0.6586 | Up: 96.69 Mb | Lat: 13.402s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.812      0.748      0.758      0.495
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7582 | Loss: 0.6573 | Time: 97.2s
+
+========== Round 136 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 28.092s
+   [Client 0] Loss: 0.6471 | Up: 96.69 Mb | Lat: 13.358s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.815      0.767       0.77      0.494
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.9ms postprocess per image
+   [Result] mAP50: 0.7698 | Loss: 0.6607 | Time: 99.8s
+
+========== Round 137 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 15.542s
+   [Client 0] Loss: 0.6388 | Up: 96.69 Mb | Lat: 20.469s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.807      0.781      0.772      0.492
+Speed: 0.5ms preprocess, 0.7ms inference, 0.0ms loss, 0.8ms postprocess per image
+   [Result] mAP50: 0.7725 | Loss: 0.6634 | Time: 90.9s
+
+========== Round 138 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 24.868s
+   [Client 0] Loss: 0.6516 | Up: 96.69 Mb | Lat: 13.969s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.821      0.775      0.769      0.498
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7695 | Loss: 0.6599 | Time: 87.1s
+
+========== Round 139 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 37.248s
+   [Client 0] Loss: 0.6518 | Up: 96.69 Mb | Lat: 12.276s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.797      0.783       0.76      0.492
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7597 | Loss: 0.6588 | Time: 98.1s
+
+========== Round 140 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.614s
+   [Client 0] Loss: 0.6527 | Up: 96.69 Mb | Lat: 14.094s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.816      0.781      0.771        0.5
+Speed: 0.6ms preprocess, 0.9ms inference, 0.0ms loss, 1.0ms postprocess per image
+   [Result] mAP50: 0.7709 | Loss: 0.6632 | Time: 99.3s
+
+========== Round 141 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 13.670s
+   [Client 0] Loss: 0.6413 | Up: 96.69 Mb | Lat: 13.758s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.829      0.772      0.767      0.492
+Speed: 0.5ms preprocess, 1.0ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Result] mAP50: 0.7670 | Loss: 0.6527 | Time: 88.9s
+
+========== Round 142 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 17.171s
+   [Client 0] Loss: 0.6396 | Up: 96.69 Mb | Lat: 48.447s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239       0.79      0.778      0.766      0.492
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.2ms postprocess per image
+   [Result] mAP50: 0.7664 | Loss: 0.6635 | Time: 89.1s
+
+========== Round 143 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 37.169s
+   [Client 0] Loss: 0.6371 | Up: 96.69 Mb | Lat: 13.457s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.749      0.741      0.708      0.493
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 0.7ms postprocess per image
+   [Result] mAP50: 0.7078 | Loss: 0.6569 | Time: 99.0s
+
+========== Round 144 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.355s
+   [Client 0] Loss: 0.6433 | Up: 96.69 Mb | Lat: 14.293s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.791       0.77      0.759      0.488
+Speed: 0.5ms preprocess, 0.7ms inference, 0.0ms loss, 0.9ms postprocess per image
+   [Result] mAP50: 0.7588 | Loss: 0.6769 | Time: 99.0s
+
+========== Round 145 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 19.278s
+   [Client 0] Loss: 0.6513 | Up: 96.69 Mb | Lat: 10.538s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.792      0.779      0.761      0.488
+Speed: 0.5ms preprocess, 0.7ms inference, 0.0ms loss, 1.3ms postprocess per image
+   [Result] mAP50: 0.7611 | Loss: 0.6641 | Time: 87.6s
+
+========== Round 146 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 18.318s
+   [Client 0] Loss: 0.6644 | Up: 96.69 Mb | Lat: 18.076s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.781      0.769      0.766      0.504
+Speed: 0.4ms preprocess, 0.7ms inference, 0.0ms loss, 0.3ms postprocess per image
+   [Result] mAP50: 0.7660 | Loss: 0.6545 | Time: 90.8s
+
+========== Round 147 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 20.400s
+   [Client 0] Loss: 0.6421 | Up: 96.69 Mb | Lat: 23.498s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.795      0.774      0.755      0.491
+Speed: 0.5ms preprocess, 0.8ms inference, 0.0ms loss, 0.8ms postprocess per image
+   [Result] mAP50: 0.7555 | Loss: 0.6574 | Time: 99.5s
+
+========== Round 148 / 199 ==========
+   [Downlink] 96.69 Mb, Latency: 37.290s
+   [Client 0] Loss: 0.6561 | Up: 96.69 Mb | Lat: 15.352s
+   [Server] Aggregating...
+   [Server] Evaluating...
+Ultralytics 8.3.50 🚀 Python-3.9.16 torch-2.0.0+cu117 CUDA:0 (NVIDIA GeForce RTX 4090, 24083MiB)
+Model summary (fused): 168 layers, 3,006,038 parameters, 0 gradients, 8.1 GFLOPs
+                   all        164        239      0.795      0.774      0.753      0.496
+Speed: 0.5ms preprocess, 0.9ms inference, 0.0ms loss, 0.7ms postprocess per image
