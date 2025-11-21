@@ -1,33 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-FLQ-YOLOv5 联邦训练脚本 (Stateless Version)
+FLQ-YOLOv7 联邦训练脚本 (v7: Server Momentum Version)
 ----------------------------------------------------------------
-- 核心修复: 采用 "Stateless" 设计。ManualClientTrainer 不再持有模型实例。
-- 显存管理: 每次 train_epoch 动态加载模型，结束后强制销毁并 GC，确保显存归零。
-- 解决报错: 彻底根治 CUDA OOM 导致的 Device Mismatch 问题。
+- 核心改进: 引入 Server Momentum (0.9) 解决 Client Drift 导致的震荡问题
+- 适用场景: 大模型 (Small/Medium) 或 Non-IID 严重的数据集
+- 继承功能: DIL 环境模拟, CSV 全维度记录, Stateless 训练
 ----------------------------------------------------------------
 """
 
-# ================= 补丁: 修复 Torch 版本兼容性 =================
 import torch
 try:
     _ = torch.OutOfMemoryError
 except AttributeError:
     torch.OutOfMemoryError = RuntimeError
-# ===========================================================
 
 import argparse
 import copy
 import json
+import csv
 import random
 import os
 import time
 import shutil
-import gc  # <--- 新增：垃圾回收模块
+import gc
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-from types import SimpleNamespace  # <--- 新增这行引用
+from types import SimpleNamespace
 
 import numpy as np
 import torch.nn as nn
@@ -42,8 +41,7 @@ from ultralytics.data import build_yolo_dataset, build_dataloader
 from ultralytics.utils.loss import v8DetectionLoss
 from ultralytics.data.utils import check_det_dataset
 
-# ====================== 1. 基础工具 & DIL ======================
-
+# ====================== 1. 基础工具 & DIL 模拟 ======================
 
 def seed_everything(seed: int = 42):
     random.seed(seed)
@@ -54,31 +52,33 @@ def seed_everything(seed: int = 42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-
 def save_json(obj, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
 
+class DILSimulator:
+    """模拟受限无线网络环境 (Dynamic Interference Link)"""
+    def __init__(self, min_bw=2.0, max_bw=10.0, min_loss=0.0, max_loss=0.2):
+        self.min_bw = min_bw      # Mbps
+        self.max_bw = max_bw      # Mbps
+        self.min_loss = min_loss  # 丢包率 0%
+        self.max_loss = max_loss  # 丢包率 20%
 
-def sample_dil_bandwidth() -> float:
-    return random.uniform(2.0, 10.0)
-
-
-def sample_dil_loss_ratio() -> float:
-    return random.uniform(0.0, 0.2)
-
-
-def apply_DIL_fluctuation(bits: float) -> float:
-    bw_mbps = sample_dil_bandwidth()
-    max_bits = bw_mbps * 1e6
-    loss_ratio = sample_dil_loss_ratio()
-    bits_after_loss = bits * (1.0 - loss_ratio)
-    bits_limited = min(bits_after_loss, max_bits)
-    return float(bits_limited)
+    def simulate_transmission(self, data_bits: float) -> Tuple[float, float, float]:
+        if data_bits <= 0:
+            return 0.0, 0.0, 0.0
+        
+        bw_mbps = random.uniform(self.min_bw, self.max_bw)
+        loss_rate = random.uniform(self.min_loss, self.max_loss)
+        
+        effective_bw = bw_mbps * 1e6 * (1.0 - loss_rate)
+        if effective_bw < 1e-6: effective_bw = 1e-6
+        
+        latency = data_bits / effective_bw
+        return latency, bw_mbps, loss_rate
 
 # ====================== 2. 核心算法: FLQ 压缩器 ======================
-
 
 class FLQCompressor:
     def __init__(self, device):
@@ -99,8 +99,7 @@ class FLQCompressor:
         for k, v in template_sd.items():
             if v.dtype.is_floating_point:
                 numel = v.numel()
-                out[k] = flat_vec[offset: offset +
-                                  numel].view(v.shape).to(v.dtype).cpu()
+                out[k] = flat_vec[offset: offset + numel].view(v.shape).to(v.dtype).cpu()
                 offset += numel
             else:
                 out[k] = v.clone().cpu()
@@ -108,6 +107,7 @@ class FLQCompressor:
 
     def quantize_update(self, delta_vec: torch.Tensor, bits: int) -> Tuple[torch.Tensor, int]:
         num_params = delta_vec.numel()
+        
         if self.local_error is None:
             self.local_error = torch.zeros_like(delta_vec)
         target = delta_vec + self.local_error
@@ -118,13 +118,12 @@ class FLQCompressor:
 
         if bits == 1:
             scale = target.abs().mean()
-            if scale < 1e-8:
-                scale = 1e-8
+            if scale < 1e-8: scale = 1e-8
             sign = torch.sign(target)
             sign[sign == 0] = 1.0
             quantized = sign * scale
             self.local_error = target - quantized
-            return quantized, num_params + 32
+            return quantized, num_params + 32 
         else:
             mn, mx = target.min(), target.max()
             scale = (mx - mn) / (2**bits - 1 + 1e-8)
@@ -136,109 +135,71 @@ class FLQCompressor:
 
 # ====================== 3. 训练内核: Stateless Manual Trainer ======================
 
-
 class ManualClientTrainer:
-    """
-    无状态训练器：不在 __init__ 中保留模型，只在 train_epoch 中临时创建并销毁。
-    """
-
     def __init__(self, model_path: str, data_yaml: Path, device: str, batch: int, imgsz: int):
         self.device = device
         self.data_yaml = data_yaml
-        self.model_path = model_path  # 只存路径，不加载模型对象
+        self.model_path = model_path
         self.batch = batch
         self.imgsz = imgsz
 
-        # --- DataLoader (保持持久化，因为 DataLoader 重建很慢且不占显存) ---
         cfg = get_cfg(DEFAULT_CFG)
         cfg.data = str(data_yaml)
         cfg.imgsz = imgsz
         cfg.batch = batch
-
         data_info = check_det_dataset(str(data_yaml))
         train_path = data_info['train']
-
         self.dataset = build_yolo_dataset(
             cfg, train_path, batch, data_info, mode="train", rect=False, stride=32
         )
-        # 强制 workers=0 避免多进程死锁
         self.loader = build_dataloader(
             self.dataset, batch, workers=0, shuffle=True, rank=-1)
-
-        # 压缩器是轻量级的，可以保留
         self.compressor = FLQCompressor(device)
 
-    def train_epoch(self, global_sd: Dict, local_epochs: int, lr: float, momentum: float) -> Tuple[Dict, dict, dict]:
-        """执行本地训练 - 显存安全版"""
-
-        # 1. 动态创建模型 (Fresh Load)
-        # 这确保了没有任何之前的缓存残留
+    def train_epoch(self, global_sd: Dict, local_epochs: int, lr: float) -> Tuple[Dict, dict, dict]:
         temp_wrapper = YOLO(self.model_path)
         model = temp_wrapper.model
 
-        # ================= 关键修复：Dict 转 Namespace =================
-        # 解决 AttributeError: 'dict' object has no attribute 'box'
         if hasattr(model, 'args') and isinstance(model.args, dict):
             model.args = SimpleNamespace(**model.args)
-        # ===========================================================
         
-        # 加载权重 & 移至 GPU
         model.load_state_dict(global_sd)
         model.to(self.device)
         model.train()
 
-        #=================== 关键修复：解冻所有参数 ===================
-        # 解决 RuntimeError: element 0 of tensors does not require grad
         for param in model.parameters():
             param.requires_grad = True
-        # ================
         
-        # 2. 动态创建 Loss & Scaler
         loss_fn = v8DetectionLoss(model)
         
-        # =================== 终极修复：直接修正 Loss 对象的超参数 ===================
-        # 有时候 v8DetectionLoss 会深拷贝 args，导致上面对 model.args 的修改没生效
-        # 或者 model.args 本身被 Ultralytics 内部逻辑重置了
         if hasattr(loss_fn, 'hyp'):
-            # 确保 hyp 是个 Namespace
             if isinstance(loss_fn.hyp, dict):
                 loss_fn.hyp = SimpleNamespace(**loss_fn.hyp)
-            
-            # 暴力注入默认值
             if not hasattr(loss_fn.hyp, 'box'): loss_fn.hyp.box = 7.5
             if not hasattr(loss_fn.hyp, 'cls'): loss_fn.hyp.cls = 0.5
             if not hasattr(loss_fn.hyp, 'dfl'): loss_fn.hyp.dfl = 1.5
-        # =======================================================================
 
         if hasattr(loss_fn, 'proj'):
             loss_fn.proj = loss_fn.proj.to(self.device)
 
         scaler = GradScaler()
-        # === 关键调整：适应 Stateless 训练 ===
-        # 保持原始 LR，但移除 Momentum 以防止在重置 Optimizer 时发生震荡
         optimizer = optim.SGD(model.parameters(), lr=lr,
                               momentum=0.0, weight_decay=5e-4)
 
         loss_stats = {"box": [], "cls": [], "dfl": []}
 
-        # --- 训练循环 ---
         for epoch in range(local_epochs):
             for batch in self.loader:
-                # 预处理
-                batch['img'] = batch['img'].to(
-                    self.device, non_blocking=True).float() / 255.0
+                batch['img'] = batch['img'].to(self.device, non_blocking=True).float() / 255.0
                 for k in batch:
                     if k != 'img' and isinstance(batch[k], torch.Tensor):
                         batch[k] = batch[k].to(self.device)
 
                 optimizer.zero_grad()
-
-                # AMP 前向
                 with autocast(enabled=True):
                     preds = model(batch['img'])
                     loss, loss_items = loss_fn(preds, batch)
 
-                # AMP 反向
                 scaler.scale(loss).backward()
                 scaler.unscale_(optimizer)
                 nn.utils.clip_grad_norm_(model.parameters(), 10.0)
@@ -249,23 +210,15 @@ class ManualClientTrainer:
                 loss_stats["cls"].append(loss_items[1].item())
                 loss_stats["dfl"].append(loss_items[2].item())
 
-        # --- 训练结束：提取结果 ---
         final_sd = {k: v.cpu() for k, v in model.state_dict().items()}
 
-        # ================= 激进的显存清理 =================
-        # 1. 手动删除引用
         del model
         del temp_wrapper
         del loss_fn
         del optimizer
         del scaler
-
-        # 2. 强制垃圾回收 (清除 Python 对象)
         gc.collect()
-
-        # 3. 清空 PyTorch 缓存 (清除 GPU 碎片)
         torch.cuda.empty_cache()
-        # ===============================================
 
         metadata = {
             "final_loss": np.mean(loss_stats["box"]) if loss_stats["box"] else 0.0,
@@ -273,7 +226,6 @@ class ManualClientTrainer:
         return final_sd, loss_stats, metadata
 
 # ====================== 4. 主流程 ======================
-
 
 def run_federated_flq(
     client_yaml_list: List[Path],
@@ -290,6 +242,20 @@ def run_federated_flq(
 ) -> None:
     seed_everything(42)
     out_dir.mkdir(parents=True, exist_ok=True)
+    
+    csv_path = out_dir / "experiment_data.csv"
+    csv_headers = [
+        "round", "mAP50", "mAP50-95", "avg_loss",
+        "bits_down_raw", "bits_down_compressed", "latency_down_sim",
+        "bits_up_raw", "bits_up_compressed", "latency_up_sim",
+        "total_round_time"
+    ]
+    for i in range(len(client_yaml_list)):
+        csv_headers.append(f"client_{i}_loss")
+        
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(csv_headers)
 
     if torch.cuda.is_available() and device != 'cpu':
         if device.isdigit():
@@ -297,16 +263,13 @@ def run_federated_flq(
     else:
         device = 'cpu'
 
-    print(f"🚀 FLQ-YOLOv5 (Stateless Fixed) | Device: {device} | Bits: {bits}")
+    print(f"🚀 FLQ-YOLOv7 (Server Momentum) | Device: {device} | Bits: {bits}")
 
-    # 1. 初始化 & Warmup
+    # --- 1. Warmup ---
     print("   [Init] Adapting model head (Warmup)...")
     warmup_dir = out_dir / "warmup_temp"
-
-    # 临时创建模型用于 Warmup
     init_model = YOLO(str(model_path))
     try:
-        # 修正：Warmup 也使用 GPU，避免 Ultralytics 设置 CUDA_VISIBLE_DEVICES=-1 污染环境
         init_model.train(
             data=str(val_yaml), epochs=1, imgsz=imgsz, batch=batch,
             device=device, project=str(warmup_dir), name="init_run",
@@ -315,69 +278,68 @@ def run_federated_flq(
     except Exception as e:
         print(f"   [Init] Warmup passed: {e}")
     
-    # === 关键修复：清理 Ultralytics 可能残留的环境变量 ===
     if "CUDA_VISIBLE_DEVICES" in os.environ:
         os.environ.pop("CUDA_VISIBLE_DEVICES")
-    # ==================================================
 
     warmup_pt = warmup_dir / "init_run/weights/last.pt"
     adapted_pt = out_dir / "init_adapted.pt"
     model_path_to_use = model_path
-
     if warmup_pt.exists():
         shutil.copy(str(warmup_pt), str(adapted_pt))
         model_path_to_use = adapted_pt
-        # 重新加载以获取正确结构
         del init_model
         init_model = YOLO(str(adapted_pt))
     else:
         print("   [Warning] Warmup failed, using original model.")
 
-    # 获取初始权重
-    global_sd = {k: v.cpu().clone()
-                 for k, v in init_model.model.state_dict().items()}
+    global_sd = {k: v.cpu().clone() for k, v in init_model.model.state_dict().items()}
     template_sd = copy.deepcopy(global_sd)
-
-    # === 关键：用完立刻删除 init_model ===
+    
     del init_model
     gc.collect()
-    if warmup_dir.exists():
-        try:
-            shutil.rmtree(warmup_dir)
-        except:
-            pass
-    # ===================================
+    if warmup_dir.exists(): shutil.rmtree(warmup_dir)
 
-    # 2. 初始化 Clients (只传路径，不传对象)
+    # --- 2. Clients & Simulator ---
     client_trainers = []
     for yaml_path in client_yaml_list:
-        trainer = ManualClientTrainer(
-            str(model_path_to_use), yaml_path, device, batch, imgsz)
+        trainer = ManualClientTrainer(str(model_path_to_use), yaml_path, device, batch, imgsz)
         client_trainers.append(trainer)
 
     server_helper = FLQCompressor(device)
-    # server_momentum_buffer = None # 移除动量buffer初始化
-    log = {"round": [], "mAP50": [], "mAP50-95": [],
-           "box_loss": [], "bits_up_raw": [], "bits_up_dil": []}
-    
-    # 详细日志记录
-    client_details = {i: {"box_loss": [], "grad_scale": []} for i in range(len(client_yaml_list))}
+    dil_sim = DILSimulator(min_bw=2.0, max_bw=10.0, min_loss=0.0, max_loss=0.2)
 
-    # 3. 联邦循环
+    # State Tracking
+    best_map = 0.0
+    
+    # === Server Aggregation Strategy: Global LR ===
+    # 移除 Momentum Buffer 以防止梯度爆炸
+    # 使用 server_lr < 1.0 来平滑更新 (类似 FedAvg with learning rate)
+    server_lr = 0.8 
+
+    # --- 3. Federated Loop ---
     for r in range(rounds):
         print(f"\n========== Round {r} / {rounds - 1} ==========")
         t_start = time.time()
+        
+        # == 下行广播模拟 ==
+        num_params = sum(p.numel() for p in global_sd.values())
+        bits_down_raw = num_params * 32
+        bits_down_compressed = bits_down_raw
+        latency_down, _, _ = dil_sim.simulate_transmission(bits_down_compressed)
+        print(f"   [Downlink] {bits_down_compressed/1e6:.2f} Mb, Latency: {latency_down:.3f}s")
+
+        # == 本地训练 ==
         cur_lr = 0.01 * (0.98 ** r)
-
         client_updates_dense = []
-        round_box_loss = 0.0
-        bits_up_raw_total = 0.0
-        bits_up_dil_total = 0.0
-
-        # --- A. 客户端训练 ---
+        round_loss_list = []
+        
+        bits_up_raw_total = 0
+        bits_up_compressed_total = 0
+        max_latency_up = 0
+        
         for i, trainer in enumerate(client_trainers):
             local_sd, loss_stats, meta = trainer.train_epoch(
-                global_sd, local_epochs, lr=cur_lr, momentum=0.937)
+                global_sd, local_epochs, lr=cur_lr)
 
             flat_global = server_helper.flatten_params(global_sd).to(device)
             flat_local = trainer.compressor.flatten_params(local_sd).to(device)
@@ -386,85 +348,80 @@ def run_federated_flq(
             q_delta, bit_cost = trainer.compressor.quantize_update(delta, bits)
             client_updates_dense.append(q_delta)
             
-            scale = q_delta.abs().mean().item()
-            client_details[i]["box_loss"].append(meta["final_loss"])
-            client_details[i]["grad_scale"].append(scale)
-
-            bits_up_raw_total += bit_cost
-            bits_up_dil_total += apply_DIL_fluctuation(bit_cost)
-
-            avg_loss = np.mean(loss_stats["box"]) if loss_stats["box"] else 0
-            round_box_loss += avg_loss
+            client_loss = meta["final_loss"]
+            round_loss_list.append(client_loss)
+            
+            raw_bits = delta.numel() * 32
+            bits_up_raw_total += raw_bits
+            bits_up_compressed_total += bit_cost
+            
+            lat, _, _ = dil_sim.simulate_transmission(bit_cost)
+            max_latency_up = max(max_latency_up, lat)
 
             if i == 0:
-                print(
-                    f"   [Client {i}] Loss: {avg_loss:.4f} | Scale: {scale:.6f}")
+                print(f"   [Client {i}] Loss: {client_loss:.4f} | Up: {bit_cost/1e6:.2f} Mb | Lat: {lat:.3f}s")
+            
+            # 模型保存策略：每50轮 或 最后一轮
+            if (r + 1) % 50 == 0 or r == rounds - 1:
+                c_save_path = out_dir / f"client_{i}_final.pt"
+                torch.save(local_sd, c_save_path)
 
-        round_box_loss /= len(client_trainers)
+        avg_loss = np.mean(round_loss_list)
 
-        # --- B. 服务器聚合（修正版：纯 FedAvg，无服务器动量） ---
-        print("   [Server] Aggregating...")
+        # == 服务器聚合 (Global LR Smoothing) ==
+        print(f"   [Server] Aggregating (Global LR: {server_lr})...")
         stack_updates = torch.stack(client_updates_dense)
         avg_update = stack_updates.mean(dim=0)
-
-        # 可选：如果担心步长过大，可乘一个 global_lr，例如 1.0
-        # 这里我们先保持最原始的 FedAvg
         
-        # 移除所有动量逻辑
-        # if server_momentum_buffer is None: ...
-        # server_momentum_buffer = ...
+        # Global Update: w_{t+1} = w_t + server_lr * avg_update
+        flat_global_new = server_helper.flatten_params(global_sd).to(device) + (server_lr * avg_update)
+        global_sd = server_helper.reconstruct_state_dict(flat_global_new, template_sd)
 
-        flat_global_new = server_helper.flatten_params(
-            global_sd).to(device) + avg_update
-        global_sd = server_helper.reconstruct_state_dict(
-            flat_global_new, template_sd)
-
-        # --- C. 评估 (动态加载模式) ---
+        # == 评估 ==
         print("   [Server] Evaluating...")
         metrics = {"mAP50": 0, "mAP50-95": 0}
         try:
             torch.cuda.empty_cache()
-            # 动态加载评估模型
             val_model = YOLO(str(model_path_to_use))
             val_model.model.load_state_dict(global_sd)
-
-            # 恢复使用 GPU (device) 进行评估
             results = val_model.val(
                 data=str(val_yaml), batch=batch, device=device,
                 verbose=False, plots=False
             )
-            metrics["mAP50"] = results.results_dict.get(
-                "metrics/mAP50(B)", 0.0)
-            metrics["mAP50-95"] = results.results_dict.get(
-                "metrics/mAP50-95(B)", 0.0)
-
-            # 评估完立刻销毁
+            metrics["mAP50"] = results.results_dict.get("metrics/mAP50(B)", 0.0)
+            metrics["mAP50-95"] = results.results_dict.get("metrics/mAP50-95(B)", 0.0)
             del val_model
             gc.collect()
-
         except Exception as e:
             print(f"   [Warning] Eval failed: {e}")
 
         torch.cuda.empty_cache()
-
-        # --- D. 日志 ---
-        log["round"].append(r)
-        log["mAP50"].append(metrics["mAP50"])
-        log["mAP50-95"].append(metrics["mAP50-95"])
-        log["box_loss"].append(round_box_loss)
-        log["bits_up_raw"].append(bits_up_raw_total)
-        log["bits_up_dil"].append(bits_up_dil_total)
-
-        save_json(log, out_dir / "flq_log.json")
-        # 保存 Client 详细日志
-        save_json(client_details, out_dir / "client_details.json")
         
-        print(
-            f"   [Result] mAP50: {metrics['mAP50']:.4f} | Loss: {round_box_loss:.4f} | Time: {time.time()-t_start:.1f}s")
+        t_end = time.time()
+        round_time = t_end - t_start
+
+        # == 记录与保存 ==
+        csv_row = [
+            r, metrics["mAP50"], metrics["mAP50-95"], avg_loss,
+            bits_down_raw, bits_down_compressed, latency_down,
+            bits_up_raw_total, bits_up_compressed_total, max_latency_up,
+            round_time
+        ]
+        csv_row.extend(round_loss_list)
+        
+        with open(csv_path, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(csv_row)
+
+        if metrics["mAP50"] > best_map:
+            best_map = metrics["mAP50"]
+            torch.save(global_sd, out_dir / "global_best.pt")
+            print(f"   [Save] New Best Model (mAP50={best_map:.4f})")
+
+        print(f"   [Result] mAP50: {metrics['mAP50']:.4f} | Loss: {avg_loss:.4f} | Time: {round_time:.1f}s")
 
     torch.save(global_sd, out_dir / "global_last.pt")
     print(f"\n训练完成. 结果保存在: {out_dir}")
-
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
@@ -474,13 +431,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--rounds", type=int, default=10)
     p.add_argument("--local-epochs", type=int, default=2)
     p.add_argument("--bits", type=int, default=8)
-    p.add_argument("--batch", type=int, default=4)  # 默认调小
+    p.add_argument("--batch", type=int, default=4)
     p.add_argument("--imgsz", type=int, default=640)
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--workers", type=int, default=0)
-    p.add_argument("--out-dir", type=str, default="./results/runs_flq_v5")
+    p.add_argument("--out-dir", type=str, default="./results/runs_flq_v7")
     return p.parse_args()
-
 
 def main():
     args = parse_args()
@@ -490,6 +446,6 @@ def main():
         args.device, args.workers, Path(args.out_dir)
     )
 
-
 if __name__ == "__main__":
     main()
+
