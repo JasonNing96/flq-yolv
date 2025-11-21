@@ -9,7 +9,7 @@
 #    ./data/oil_detection_dataset/client2/oil.yaml \
         
 
-python flq_yolov_v8.py \
+python flq_yolov_v6.py \
   --clients ./data/oil_detection_dataset/client1/oil.yaml \
             ./data/oil_detection_dataset/client2/oil.yaml \
             ./data/oil_detection_dataset/client3/oil.yaml \
@@ -23,7 +23,7 @@ python flq_yolov_v8.py \
   --batch 32 \
   --bits 32 \
   --workers 1 \
-  --out-dir ./results/runs_flq_v8_yolov8s
+  --out-dir ./results/runs_flq_v6_yolov8s
 #   --out-dir ./results/runs_flq_v5
 # python flq_yolo_v2.py \
 #   --clients ./data/oil_detection_dataset/client1/oil.yaml \
