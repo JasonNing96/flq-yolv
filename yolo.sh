@@ -20,10 +20,9 @@ python flq_yolov_v6.py \
   --model ./models/yolov8s.pt \
   --rounds 200 \
   --local-epochs 1 \
-  --batch 32 \
-  --bits 32 \
-  --workers 1 \
-  --out-dir ./results/runs_flq_v6_yolov8s
+  --bits 8 \
+#   --out-dir ./results/runs_flq_v6_yolov8s_8bit_1epochs
+  
 #   --out-dir ./results/runs_flq_v5
 # python flq_yolo_v2.py \
 #   --clients ./data/oil_detection_dataset/client1/oil.yaml \

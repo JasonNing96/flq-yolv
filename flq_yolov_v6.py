@@ -615,28 +615,52 @@ def run_federated_flq(
     save_checkpoint(global_sd, template_sd, client_trainers, rounds - 1, best_map, out_dir, device)
     print(f"\n训练完成. 结果保存在: {out_dir}")
 
+def generate_out_dir(model_path: str, bits: int, local_epochs: int, base_dir: str = "./results/runs_flq_v6") -> str:
+    """根据参数自动生成详细的输出文件夹名称"""
+    # 从模型路径提取模型名称（如 yolov8s.pt -> yolov8s）
+    model_name = Path(model_path).stem
+    # 移除可能的路径前缀，只保留文件名
+    if '/' in model_name or '\\' in model_name:
+        model_name = Path(model_name).stem
+    
+    # 组合文件夹名称：runs_flq_v6_yolov8s_32bit_1epoch
+    detailed_name = f"runs_flq_v6_{model_name}_{bits}bit_{local_epochs}epoch"
+    
+    # 如果 base_dir 是默认值，使用详细名称；否则使用用户指定的
+    if base_dir == "./results/runs_flq_v6":
+        return f"./results/{detailed_name}"
+    else:
+        # 用户指定了自定义路径，直接使用
+        return base_dir
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--clients", type=str, nargs="+", required=True)
     p.add_argument("--val-data", type=str, required=True)
     p.add_argument("--model", type=str, required=True)
-    p.add_argument("--rounds", type=int, default=10)
+    p.add_argument("--rounds", type=int, default=200)
     p.add_argument("--local-epochs", type=int, default=2)
     p.add_argument("--bits", type=int, default=8)
     p.add_argument("--batch", type=int, default=4)
     p.add_argument("--imgsz", type=int, default=640)
     p.add_argument("--device", type=str, default="cuda:0")
     p.add_argument("--workers", type=int, default=0)
-    p.add_argument("--out-dir", type=str, default="./results/runs_flq_v6")
+    p.add_argument("--out-dir", type=str, default="./results/runs_flq_v6", 
+                   help="输出目录，默认会根据模型、压缩比、epoch自动生成详细名称")
     p.add_argument("--no-resume", action="store_true", help="不从 checkpoint 恢复，从头开始")
     return p.parse_args()
 
 def main():
     args = parse_args()
+    
+    # 自动生成详细的输出文件夹名称
+    out_dir = generate_out_dir(args.model, args.bits, args.local_epochs, args.out_dir)
+    print(f"📁 Output directory: {out_dir}")
+    
     run_federated_flq(
         [Path(p) for p in args.clients], Path(args.val_data), Path(args.model),
         args.rounds, args.local_epochs, args.bits, args.batch, args.imgsz,
-        args.device, args.workers, Path(args.out_dir), resume=not args.no_resume
+        args.device, args.workers, Path(out_dir), resume=not args.no_resume
     )
 
 if __name__ == "__main__":
