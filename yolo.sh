@@ -8,10 +8,13 @@ python flq_yolov_v8.py \
             ./data/oil_detection_dataset/client5/oil.yaml \
             ./data/oil_detection_dataset/client6/oil.yaml \
   --val-data ./data/oil_detection_dataset/data.yaml \
-  --model ./models/yolov8n.pt \
+  --model ./models/yolov8s.pt \
   --rounds 200 \
-  --local-epochs 1 \
+  --local-epochs 3 \
   --bits 32 \
+
+# 当前状况
+# v8s 效果最好，map50 ~ 0.758, 我在思考提高epoch 或者 使用yolov8m 是否可以有效提高精度和凸显低比特算法效率。 
 
 # 8s model training
 # python flq_yolov_v8.py \
