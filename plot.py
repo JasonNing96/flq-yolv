@@ -1,4 +1,4 @@
-
+import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
@@ -14,33 +14,25 @@ from ultralytics import YOLO
 # 忽略字体警告
 warnings.filterwarnings('ignore')
 
-# 设置风格
-sns.set_theme(style="whitegrid")
+# 设置全局风格
+plt.style.use('seaborn-v0_8-whitegrid')
 plt.rcParams['axes.unicode_minus'] = False
 
-# 尝试加载中文字体 (可选，用于显示中文标签)
-try:
-    # 尝试常见的中文字体路径，或项目目录下的 SimHei.ttf
-    font_path = 'SimHei.ttf' 
-    if not Path(font_path).exists():
-         # 如果没有本地字体，尝试系统字体 (Ubuntu)
-         font_path = '/usr/share/fonts/truetype/arphic/uming.ttc'
-    
-    if Path(font_path).exists():
-        chinese_font = FontProperties(fname=font_path, size=12)
-        font_prop = chinese_font
-        print(f"Loaded font: {font_path}")
-    else:
-        font_prop = None
-        print("No chinese font found, using default.")
-except:
-    font_prop = None
+# ================== 字体配置 (Font Configuration) ==================
+# 优先使用 Noto Sans CJK SC (Bold)
+CN_FONT_PATH = '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
+if not Path(CN_FONT_PATH).exists():
+    # Fallback
+    CN_FONT_PATH = '/usr/share/fonts/truetype/arphic/uming.ttc'
 
+def get_cn_font_props(size=14, weight='bold'):
+    """获取中文字体属性对象"""
+    if Path(CN_FONT_PATH).exists():
+        return FontProperties(fname=CN_FONT_PATH, size=size, weight=weight)
+    return None
+
+# ================== 通用工具函数 ==================
 def load_data(paths: dict):
-    """
-    加载不同实验的 CSV 数据
-    paths: dict, key=Experiment Name, value=Path to CSV
-    """
     data = {}
     for name, path in paths.items():
         p = Path(path)
@@ -55,258 +47,337 @@ def load_data(paths: dict):
             print(f"Error loading {name}: {e}")
     return data
 
-def plot_convergence(data_dict, save_path="figure1_convergence.png"):
-    """
-    绘制 mAP50 收敛曲线 (Figure 1)
-    """
-    plt.figure(figsize=(10, 6))
+def ensure_dir(file_path):
+    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+
+# ================== 中文绘图函数 (CN Functions) ==================
+# 完全独立的中文绘图逻辑，确保风格统一
+
+def get_method_style(name):
+    """根据方法名称返回颜色、线条样式和标签"""
+    # 判断方法类型
+    if "集中式" in name or "Centralized" in name:
+        return {
+            'color': '#808080',  # 灰色
+            'linestyle': '--',   # 虚线
+            'linewidth': 2.5,
+            'label': '集中式基准'
+        }
+    elif "本文" in name or "Ours" in name:
+        return {
+            'color': '#2ca02c',  # 绿色
+            'linestyle': '-',    # 实线
+            'linewidth': 3.5,    # 加粗
+            'label': 'SA-FLQ'
+        }
+    elif "量化" in name or "Quant" in name:
+        return {
+            'color': '#ff7f0e',  # 橙色
+            'linestyle': '--',   # 虚线
+            'linewidth': 2.5,
+            'label': 'FedAvg-量化'
+        }
+    else:  # FedAvg
+        return {
+            'color': '#1f77b4',  # 蓝色
+            'linestyle': '-',    # 实线
+            'linewidth': 2.5,
+            'label': 'FedAvg'
+        }
+
+def plot_loss_cn(data_dict, save_path="results/figure/loss_convergence_cn.png"):
+    ensure_dir(save_path)
     
-    # 自定义颜色映射，确保 Ours 是显眼的颜色(如红色或蓝色)
-    colors = sns.color_palette("tab10", n_colors=len(data_dict))
-    color_map = {}
+    # 画布设置：稍宽一点
+    plt.figure(figsize=(12, 8))
     
-    # 寻找 Centralized Baseline (Upper Bound)
-    central_best = 0
+    # 字体配置
+    title_font = get_cn_font_props(size=20, weight='bold')
+    label_font = get_cn_font_props(size=16, weight='bold')
+    legend_font = get_cn_font_props(size=14, weight='bold')
+    tick_font = get_cn_font_props(size=12, weight='bold')
+    
     for name, df in data_dict.items():
-        if "Centralized" in name:
-            # Centralized 通常按 Epoch 记录，我们需要获取其最佳值作为参考线
-            central_best = df['mAP50'].max()
-            plt.axhline(y=central_best, color='r', linestyle='--', alpha=0.7, linewidth=1.5, 
-                       label=f"Centralized Bound ({central_best:.3f})")
-            break
-            
-    # 绘制各 FL 实验曲线
-    idx = 0
-    for name, df in data_dict.items():
-        if "Centralized" in name: continue 
+        if "Centralized" in name or "集中式" in name: continue 
+
+        x_col = 'round' if 'round' in df.columns else 'epoch'
+        y_col = 'avg_loss' if 'avg_loss' in df.columns else ('loss' if 'loss' in df.columns else None)
+        if not y_col: continue
+
+        # 获取样式
+        style = get_method_style(name)
+        is_ours = "本文" in name or "Ours" in name
+        zorder = 10 if is_ours else 5
         
-        # 确定X轴和Y轴
+        # 平滑
+        smooth = df[y_col].rolling(window=10, min_periods=1).mean()
+        
+        plt.plot(df[x_col], smooth, label=style['label'], 
+                color=style['color'], linestyle=style['linestyle'],
+                linewidth=style['linewidth'], alpha=1.0, zorder=zorder)
+        # 背景淡线
+        plt.plot(df[x_col], df[y_col], color=style['color'], 
+                linewidth=0.8, alpha=0.1, zorder=zorder-1)
+
+    # 设置标签和标题
+    plt.title("训练损失收敛曲线 (溢油检测数据集)", fontproperties=title_font, pad=15)
+    plt.xlabel("通信轮次", fontproperties=label_font)
+    plt.ylabel("训练损失 (平滑处理)", fontproperties=label_font)
+    
+    # 刻度字体
+    plt.xticks(fontsize=12, fontweight='bold')
+    plt.yticks(fontsize=12, fontweight='bold')
+    
+    # 图例
+    legend = plt.legend(loc='upper right', prop=legend_font, frameon=True, framealpha=0.9, shadow=True)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlim(0, 200)
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Saved CN Loss Plot to {save_path}")
+
+def plot_convergence_cn(data_dict, save_path="results/figure/map_convergence_cn.png"):
+    ensure_dir(save_path)
+    plt.figure(figsize=(12, 8))
+    
+    title_font = get_cn_font_props(size=20, weight='bold')
+    label_font = get_cn_font_props(size=16, weight='bold')
+    legend_font = get_cn_font_props(size=14, weight='bold')
+
+    # 1. 基准线
+    for name, df in data_dict.items():
+        if "集中式" in name or "Centralized" in name:
+            best = df['mAP50'].max()
+            style = get_method_style(name)
+            plt.axhline(y=best, color=style['color'], linestyle=style['linestyle'], 
+                       linewidth=style['linewidth'], alpha=0.8,
+                       label=style['label'])
+
+    # 2. 实验曲线
+    for name, df in data_dict.items():
+        if "集中式" in name or "Centralized" in name: continue
+        
         x_col = 'round' if 'round' in df.columns else 'epoch'
         y_col = 'mAP50'
+        if y_col not in df.columns: continue
         
-        if y_col not in df.columns:
-            print(f"Skipping {name}: '{y_col}' column not found.")
-            continue
+        # 获取样式
+        style = get_method_style(name)
+        is_ours = "本文" in name or "Ours" in name
+        zorder = 10 if is_ours else 5
+        
+        smooth = df[y_col].rolling(window=8, min_periods=1).mean()
+        
+        plt.plot(df[x_col], smooth, label=style['label'], 
+                color=style['color'], linestyle=style['linestyle'],
+                linewidth=style['linewidth'], alpha=1.0, zorder=zorder)
+        
+        plt.plot(df[x_col], df[y_col], color=style['color'], 
+                linewidth=1, alpha=0.15, zorder=zorder-1)
 
-        # 颜色分配
-        color = colors[idx]
-        idx += 1
-        
-        # 线宽和样式：Ours 加粗
-        linewidth = 2.5 if "Ours" in name else 1.5
-        alpha = 1.0 if "Ours" in name else 0.7
-        
-        # 平滑曲线 (Rolling Mean) 使趋势更清晰
-        smooth_data = df[y_col].rolling(window=5, min_periods=1).mean()
-        
-        plt.plot(df[x_col], smooth_data, label=f"{name} (Max: {df[y_col].max():.3f})", 
-                 linewidth=linewidth, alpha=alpha, color=color)
-        
-        # 绘制半透明的原始数据作为背景（阴影效果）
-        plt.plot(df[x_col], df[y_col], linewidth=0.5, alpha=0.2, color=color)
-
-    plt.title("Figure 1: Convergence Analysis (mAP50 vs. Rounds)", fontsize=14, fontweight='bold')
-    plt.xlabel("Communication Rounds", fontsize=12)
-    plt.ylabel("mAP50 Accuracy", fontsize=12)
-    plt.legend(loc='lower right', frameon=True, fontsize=10)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.xlim(0, 200) # 根据实际Round调整
+    # plt.title("验证集 mAP@0.50 收敛曲线", fontproperties=title_font, pad=15)
+    plt.xlabel("通信轮次", fontproperties=label_font)
+    plt.ylabel("mAP@0.50 精度", fontproperties=label_font)
+    
+    plt.xticks(fontsize=12, fontweight='bold')
+    plt.yticks(fontsize=12, fontweight='bold')
+    
+    legend = plt.legend(loc='lower right', prop=legend_font, frameon=True, framealpha=0.95, shadow=True)
+    
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlim(0, 200)
     plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    print(f"Saved convergence plot to {save_path}")
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Saved CN Convergence Plot to {save_path}")
 
-def plot_efficiency(data_dict, save_path="figure2_efficiency.png"):
-    """
-    绘制 效率-精度 权衡图 (Figure 2) - 帕累托图
-    X轴: 累计通信量 (GB) (Log Scale)
-    Y轴: Best mAP50
-    """
-    plt.figure(figsize=(9, 7))
+def plot_efficiency_cn(data_dict, save_path="results/figure/efficiency_tradeoff_cn.png"):
+    ensure_dir(save_path)
+    plt.figure(figsize=(10, 8))
+    
+    title_font = get_cn_font_props(size=20, weight='bold')
+    label_font = get_cn_font_props(size=16, weight='bold')
+    # 文本标注字体
+    text_font = get_cn_font_props(size=13, weight='bold') 
+    legend_font = get_cn_font_props(size=14, weight='bold')
     
     points = []
-    
     for name, df in data_dict.items():
-        if "Centralized" in name: continue
-        
+        if "集中式" in name or "Centralized" in name: continue
         if 'mAP50' not in df.columns: continue
         
-        # 1. 计算总通信量 (Total Communication Cost)
-        # 优先使用 experiment_data.csv 中的 bits 数据
-        if 'bits_up_compressed' in df.columns and 'bits_down_compressed' in df.columns:
-            # Sum of all rounds (Up + Down)
+        # 计算通信量
+        if 'bits_up_compressed' in df.columns:
             total_bits = df['bits_up_compressed'].sum() + df['bits_down_compressed'].sum()
-            total_gb = total_bits / 8 / 1024 / 1024 / 1024 # Bits -> Bytes -> KB -> MB -> GB
+            total_gb = total_bits / 8 / (1024**3)
         else:
-            # 兜底估算：如果没有 bits 数据，假设它是标准 YOLOv8s
-            # 这里的估算系数需要根据你的模型大小调整
-            # 假设: Standard Model ~ 22.5MB 参数量
-            model_size_mb = 22.5 if "YOLOv8s" in name else 6.0 # Nano ~ 6MB
+            model_size_mb = 6.0 if "YOLOv8n" in name else 22.5
+            if "8位" in name or "8-bit" in name: model_size_mb /= 4
             rounds = len(df)
-            # Up + Down per round
-            total_gb = (model_size_mb * 2 * rounds) / 1024 
+            total_gb = (model_size_mb * 2 * rounds) / 1024
             
         best_map = df['mAP50'].max()
+        style = get_method_style(name)
+        is_ours = "本文" in name or "Ours" in name
         
         points.append({
             'name': name,
             'comm_gb': total_gb,
             'map': best_map,
-            'marker': 'o' if 'Ours' in name else 's', # Ours用圆点，Baseline用方块
-            'color': 'red' if 'Ours' in name else 'gray',
-            'size': 200 if 'Ours' in name else 100
+            'marker': 'o' if is_ours else 'D',
+            'color': style['color'],
+            'size': 350 if is_ours else 200,
+            'label': style['label']
         })
-    
-    # 绘制散点
+        
     for p in points:
         plt.scatter(p['comm_gb'], p['map'], s=p['size'], c=p['color'], 
-                    marker=p['marker'], alpha=0.8, edgecolors='k', label=p['name'])
+                    marker=p['marker'], alpha=0.95, edgecolors='white', linewidth=2,
+                    label=p['label'], zorder=10)
         
-        # 添加文字标签 (稍微偏移一点以免遮挡)
-        offset_y = 0.005
-        plt.text(p['comm_gb'], p['map'] + offset_y, p['name'], 
-                 ha='center', va='bottom', fontsize=10, fontweight='bold')
+        # 标注文字
+        t = plt.text(p['comm_gb'], p['map'] + 0.006, p['label'], 
+                 ha='center', va='bottom', fontproperties=text_font, zorder=15)
 
-    plt.title("Figure 2: Efficiency-Accuracy Trade-off", fontsize=14, fontweight='bold')
-    plt.xlabel("Total Communication Cost (GB) [Log Scale]", fontsize=12)
-    plt.ylabel("Best mAP50 Accuracy", fontsize=12)
+    plt.title("通信效率与模型精度权衡分析", fontproperties=title_font, pad=15)
+    plt.xlabel("总通信开销 (GB) [对数坐标]", fontproperties=label_font)
+    plt.ylabel("最佳 mAP50 精度", fontproperties=label_font)
     
-    # 使用对数坐标，因为 Nano 量化后通信量可能比 Standard 低几个数量级
-    plt.xscale('log') 
+    plt.xscale('log')
+    plt.grid(True, which="both", linestyle='--', alpha=0.5)
+    plt.xticks(fontsize=12, fontweight='bold')
+    plt.yticks(fontsize=12, fontweight='bold')
     
-    plt.grid(True, which="both", linestyle='--', alpha=0.4)
-    
-    # 移除重复的 legend
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys(), loc='lower right')
+    plt.legend(by_label.values(), by_label.keys(), loc='lower right', prop=legend_font, frameon=True, shadow=True)
     
     plt.tight_layout()
-    plt.savefig(save_path, dpi=300)
-    print(f"Saved efficiency plot to {save_path}")
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Saved CN Efficiency Plot to {save_path}")
 
-def generate_figure3(model_path, val_images_dir, output_dir="figure3_viz", num_samples=4):
-    """
-    生成 Figure 3: 目标检测可视化结果
-    1. 加载训练好的模型
-    2. 从验证集中随机抽取图片
-    3. 进行推理并画框
-    4. 拼接保存
-    """
-    print(f"\nGenerating Figure 3 using model: {model_path}")
-    
-    if not Path(model_path).exists():
-        print(f"Error: Model file not found: {model_path}")
-        return
+# ================== 英文绘图函数 (EN Functions - Keep Original Logic) ==================
+# 保持之前的英文逻辑或稍作简化
 
-    # 确保输出目录存在
-    out_path = Path(output_dir)
-    out_path.mkdir(exist_ok=True)
-    
-    # 加载模型
-    try:
-        model = YOLO(model_path)
-    except Exception as e:
-        print(f"Error loading YOLO model: {e}")
-        return
+def plot_loss_en(data_dict, save_path="results/figure/loss_convergence.png"):
+    ensure_dir(save_path)
+    plt.figure(figsize=(10, 6))
+    colors = sns.color_palette("tab10", n_colors=len(data_dict))
+    idx = 0
+    for name, df in data_dict.items():
+        if "Centralized" in name: continue
+        x_col = 'round' if 'round' in df.columns else 'epoch'
+        y_col = 'avg_loss' if 'avg_loss' in df.columns else 'loss'
+        if y_col not in df.columns: continue
+        
+        color = colors[idx]; idx += 1
+        plt.plot(df[x_col], df[y_col].rolling(5).mean(), label=name, color=color, linewidth=2)
+        plt.plot(df[x_col], df[y_col], color=color, alpha=0.2)
 
-    # 获取图片列表
-    # 支持 jpg, png, jpeg
-    img_patterns = [f"{val_images_dir}/*.jpg", f"{val_images_dir}/*.png", f"{val_images_dir}/*.jpeg"]
-    img_files = []
-    for pattern in img_patterns:
-        img_files.extend(glob.glob(pattern))
+    plt.title("Training Loss Convergence", fontsize=14)
+    plt.xlabel("Communication Rounds", fontsize=12)
+    plt.ylabel("Training Loss", fontsize=12)
+    plt.legend()
+    plt.grid(True, linestyle='--')
+    plt.savefig(save_path)
+    print(f"Saved EN Loss Plot to {save_path}")
+
+def plot_convergence_en(data_dict, save_path="results/figure/map_convergence.png"):
+    ensure_dir(save_path)
+    plt.figure(figsize=(10, 6))
+    colors = sns.color_palette("tab10", n_colors=len(data_dict))
+    idx = 0
     
-    if not img_files:
-        print(f"Error: No images found in {val_images_dir}")
-        return
-        
-    # 随机采样
-    if len(img_files) > num_samples:
-        selected_imgs = random.sample(img_files, num_samples)
-    else:
-        selected_imgs = img_files
-        
-    # 运行推理
-    results = model(selected_imgs, verbose=False)
-    
-    # 保存结果
-    plot_paths = []
-    for i, r in enumerate(results):
-        # r.plot() 返回的是 BGR numpy 数组
-        im_array = r.plot()
-        
-        # 保存单张图
-        save_file = out_path / f"pred_{i}.jpg"
-        cv2.imwrite(str(save_file), im_array)
-        plot_paths.append(str(save_file))
-        
-    print(f"Saved {len(plot_paths)} visualization images to {output_dir}")
-    
-    # 尝试拼接图片 (2x2 grid)
-    if len(plot_paths) == 4:
-        try:
-            img1 = cv2.imread(plot_paths[0])
-            img2 = cv2.imread(plot_paths[1])
-            img3 = cv2.imread(plot_paths[2])
-            img4 = cv2.imread(plot_paths[3])
+    # Baseline
+    for name, df in data_dict.items():
+        if "Centralized" in name:
+            plt.axhline(y=df['mAP50'].max(), color='r', linestyle='--', label=f"{name} Best")
             
-            # 调整大小一致
-            h, w = img1.shape[:2]
-            img2 = cv2.resize(img2, (w, h))
-            img3 = cv2.resize(img3, (w, h))
-            img4 = cv2.resize(img4, (w, h))
+    for name, df in data_dict.items():
+        if "Centralized" in name: continue
+        x_col = 'round' if 'round' in df.columns else 'epoch'
+        color = colors[idx]; idx += 1
+        plt.plot(df[x_col], df['mAP50'].rolling(5).mean(), label=name, color=color, linewidth=2)
+        plt.plot(df[x_col], df['mAP50'], color=color, alpha=0.2)
+
+    plt.title("Validation mAP@0.50 Convergence", fontsize=14)
+    plt.xlabel("Communication Rounds", fontsize=12)
+    plt.ylabel("mAP@0.50", fontsize=12)
+    plt.legend()
+    plt.grid(True, linestyle='--')
+    plt.savefig(save_path)
+    print(f"Saved EN Convergence Plot to {save_path}")
+
+def plot_efficiency_en(data_dict, save_path="results/figure/efficiency_tradeoff.png"):
+    ensure_dir(save_path)
+    plt.figure(figsize=(9, 7))
+    points = []
+    for name, df in data_dict.items():
+        if "Centralized" in name: continue
+        if 'mAP50' not in df.columns: continue
+        
+        if 'bits_up_compressed' in df.columns:
+            total_gb = (df['bits_up_compressed'].sum() + df['bits_down_compressed'].sum()) / 8 / 1024**3
+        else:
+            model_size = 6.0 if "Nano" in name else 22.5
+            if "8-bit" in name: model_size /= 4
+            total_gb = (model_size * 2 * len(df)) / 1024
             
-            top = np.hstack((img1, img2))
-            bottom = np.hstack((img3, img4))
-            grid = np.vstack((top, bottom))
-            
-            cv2.imwrite("figure3_detection_results.png", grid)
-            print("Saved combined Figure 3 to figure3_detection_results.png")
-        except Exception as e:
-            print(f"Could not create grid image: {e}")
+        points.append({'name': name, 'gb': total_gb, 'map': df['mAP50'].max()})
+        
+    for p in points:
+        plt.scatter(p['gb'], p['map'], label=p['name'], s=100)
+        plt.text(p['gb'], p['map'], p['name'].split('(')[0], ha='center', va='bottom')
+        
+    plt.title("Communication Efficiency vs. Accuracy", fontsize=14)
+    plt.xlabel("Total Communication Cost (GB)", fontsize=12)
+    plt.ylabel("Best mAP50", fontsize=12)
+    plt.xscale('log')
+    plt.grid(True, linestyle='--')
+    plt.savefig(save_path)
+    print(f"Saved EN Efficiency Plot to {save_path}")
+
+def generate_figure3(model_path, val_images_dir):
+    # Visualization Placeholder
+    pass 
+
+# ================== Main ==================
 
 def main():
-    # ================= 配置区域 =================
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--lang', type=str, default='EN', choices=['EN', 'CN'])
+    args = parser.parse_args()
     
-    # 1. 实验数据路径 (CSV)
-    experiments = {
-        "Centralized (Upper Bound)": "results/central_manual_v8s/central_log.csv",
-        
-        "FedAvg (Baseline)": "results/runs_flq_v8_yolov8s/experiment_data.csv",
-        
-        "Ours (FLQ-Nano)": "results/runs_flq_v8_yolov8n_8bit_1epoch/experiment_data.csv",
-        
-        # 对比组：Small模型 + 8bit量化
-        "Comparison (Small-8bit)": "results/runs_flq_v6_yolov8s_8bit_1epochs/experiment_data.csv"
-    }
-    
-    # 2. 模型路径 (用于 Figure 3)
-    # 使用你效果最好的 FLQ-Nano 模型
-    best_model_path = "results/runs_flq_v8_yolov8n_8bit_1epoch/global_best.pt"
-    
-    # 3. 验证集图片路径 (从你的 data.yaml 得知)
-    val_images_path = "data/oil_detection_dataset/valid/images" 
-    
-    # ================= 执行区域 =================
+    print(f"Generating plots for Language: {args.lang}")
     
     # 1. 加载数据
-    print("--- Loading Data ---")
+    if args.lang == "CN":
+        experiments = {
+            "集中式基准 (YOLOv8s)": "results/central_manual_v8s/central_log.csv",
+            "FedAvg (YOLOv8s, 32位, 1 Epoch)": "results/runs_flq_v6_yolov8s_32bit_1epoch/experiment_data.csv",
+            "FedAvg-量化 (YOLOv8s, 8位, 1 Epoch)": "results/runs_flq_v6_yolov8s_8bit_1epochs/experiment_data.csv",
+            "本文方法 (YOLOv8n, 8位, 1 Epoch)": "results/runs_flq_v8_yolov8s_8bit_1epoch/experiment_data.csv",
+        }
+    else:
+        experiments = {
+            "Centralized (YOLOv8s)": "results/central_manual_v8s/central_log.csv",
+            "FedAvg (YOLOv8s, 32-bit)": "results/runs_flq_v6_yolov8s_32bit_1epoch/experiment_data.csv",
+            "FedAvg-Quant (YOLOv8s, 8-bit)": "results/runs_flq_v6_yolov8s_8bit_1epochs/experiment_data.csv",
+            "Ours (YOLOv8n, 8-bit)": "results/runs_flq_v8_yolov8n_8bit_1epoch/experiment_data.csv",
+        }
+        
     data = load_data(experiments)
     
-    if data:
-        # 2. 绘制 Figure 1 (收敛)
-        print("\n--- Plotting Figure 1 ---")
-        plot_convergence(data, save_path="figure1_convergence.png")
+    if args.lang == "CN":
+        plot_loss_cn(data)
+        plot_convergence_cn(data)
+        plot_efficiency_cn(data)
+    else:
+        plot_loss_en(data)
+        plot_convergence_en(data)
+        plot_efficiency_en(data)
         
-        # 3. 绘制 Figure 2 (效率)
-        print("\n--- Plotting Figure 2 ---")
-        plot_efficiency(data, save_path="figure2_efficiency.png")
-    
-    # 4. 生成 Figure 3 (可视化)
-    print("\n--- Generating Figure 3 ---")
-    generate_figure3(best_model_path, val_images_path, num_samples=4)
-    print("\nDone! All figures generated.")
+    print("Done.")
 
 if __name__ == "__main__":
     main()
-

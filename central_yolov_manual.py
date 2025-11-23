@@ -148,12 +148,19 @@ class CentralizedTrainer:
         # 尝试恢复 checkpoint
         start_epoch = 0
         best_map = 0.0
+        # 记录上一次的验证结果，避免非验证 Epoch 显示 0
+        self.last_map50 = 0.0
+        self.last_map95 = 0.0
+        
         csv_path = out_dir / "central_log.csv"
         
         if resume:
             ckpt_path = out_dir / "checkpoint_latest.pt"
             if ckpt_path.exists():
                 start_epoch, best_map = self.load_checkpoint(ckpt_path, model, optimizer, scheduler, scaler)
+                # 恢复上次的 best_map 作为 last_map 的初始值，避免 Resume 后显示 0
+                self.last_map50 = best_map
+                
                 # 如果 CSV 已存在，检查是否需要追加
                 if csv_path.exists() and start_epoch > 0:
                     # 读取已有数据，确保不重复
@@ -220,9 +227,11 @@ class CentralizedTrainer:
                 avg_loss = loss_sum / loss_count if loss_count > 0 else 0.0
                 
                 # Validate: 每 5 个 epoch 验证一次（减少验证频率，节省显存和时间）
-                mAP50 = 0.0
-                mAP95 = 0.0
+                mAP50 = self.last_map50
+                mAP95 = self.last_map95
+                
                 if (epoch + 1) % 5 == 0 or epoch == epochs - 1:
+                    print(f"[Validate] Running validation at epoch {epoch+1}...")
                     try:
                         model.eval()  # 切换到评估模式
                         torch.cuda.empty_cache()  # 验证前清理
@@ -232,7 +241,10 @@ class CentralizedTrainer:
                             val_wrapper = YOLO(self.model_path)
                         
                         # 加载当前权重
-                        val_wrapper.model.load_state_dict(model.state_dict())
+                        # 使用 deepcopy 确保不影响原模型，且避免 inplace update 问题
+                        state_dict = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+                        val_wrapper.model.load_state_dict(state_dict)
+                        
                         results = val_wrapper.val(
                             data=str(self.data_yaml), batch=self.batch, device=self.device,
                             verbose=False, plots=False
@@ -240,8 +252,13 @@ class CentralizedTrainer:
                         mAP50 = results.results_dict.get("metrics/mAP50(B)", 0.0)
                         mAP95 = results.results_dict.get("metrics/mAP50-95(B)", 0.0)
                         
+                        # 更新记录
+                        self.last_map50 = mAP50
+                        self.last_map95 = mAP95
+                        
                         # 清理验证结果
                         del results
+                        del state_dict
                         torch.cuda.empty_cache()
                         gc.collect()
                         
