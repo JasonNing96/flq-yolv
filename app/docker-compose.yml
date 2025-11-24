@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------
+  # FLQ Server
+  # ----------------------------------------
+  server:
+    build:
+      context: ..
+      dockerfile: app/Dockerfile
+    image: flq-fed-server:latest
+    container_name: flq-server
+    ports:
+      - "8087:8087"
+    volumes:
+      - ../outputs:/workspace/outputs
+      - ../data:/workspace/data
+      - ../models:/workspace/models
+      - ../app:/workspace/app
+    command: python -m app.runner server
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ----------------------------------------
+  # FLQ Client 1
+  # ----------------------------------------
+  client1:
+    build:
+      context: ..
+      dockerfile: app/Dockerfile
+    image: flq-fed-client:latest
+    container_name: flq-client-1
+    depends_on:
+      - server
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ../outputs:/workspace/outputs
+      - ../data:/workspace/data
+      - ../models:/workspace/models
+      - ../app:/workspace/app
+    # 连接到 server 容器
+    command: python -m app.runner client --id 1 --server http://server:8087
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ----------------------------------------
+  # FLQ Client 2 (Example)
+  # ----------------------------------------
+  client2:
+    image: flq-fed-client:latest
+    container_name: flq-client-2
+    depends_on:
+      - server
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ../outputs:/workspace/outputs
+      - ../data:/workspace/data
+      - ../models:/workspace/models
+      - ../app:/workspace/app
+    command: python -m app.runner client --id 2 --server http://server:8087
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+# Network is created automatically by docker-compose
+

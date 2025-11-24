@@ -88,14 +88,13 @@ def get_method_style(name):
 def plot_loss_cn(data_dict, save_path="results/figure/loss_convergence_cn.png"):
     ensure_dir(save_path)
     
-    # 画布设置：稍宽一点
+    plt.style.use('seaborn-v0_8-white')
     plt.figure(figsize=(12, 8))
     
     # 字体配置
-    title_font = get_cn_font_props(size=20, weight='bold')
-    label_font = get_cn_font_props(size=16, weight='bold')
+    label_font = get_cn_font_props(size=20, weight='bold')
     legend_font = get_cn_font_props(size=14, weight='bold')
-    tick_font = get_cn_font_props(size=12, weight='bold')
+    tick_font = get_cn_font_props(size=16, weight='bold')
     
     for name, df in data_dict.items():
         if "Centralized" in name or "集中式" in name: continue 
@@ -114,24 +113,32 @@ def plot_loss_cn(data_dict, save_path="results/figure/loss_convergence_cn.png"):
         
         plt.plot(df[x_col], smooth, label=style['label'], 
                 color=style['color'], linestyle=style['linestyle'],
-                linewidth=style['linewidth'], alpha=1.0, zorder=zorder)
+                linewidth=3.0, alpha=1.0, zorder=zorder)
         # 背景淡线
         plt.plot(df[x_col], df[y_col], color=style['color'], 
                 linewidth=0.8, alpha=0.1, zorder=zorder-1)
 
     # 设置标签和标题
-    plt.title("训练损失收敛曲线 (溢油检测数据集)", fontproperties=title_font, pad=15)
+    # plt.title("训练损失收敛曲线 (溢油检测数据集)", fontproperties=title_font, pad=15) # 取消标题
     plt.xlabel("通信轮次", fontproperties=label_font)
     plt.ylabel("训练损失 (平滑处理)", fontproperties=label_font)
     
-    # 刻度字体
-    plt.xticks(fontsize=12, fontweight='bold')
-    plt.yticks(fontsize=12, fontweight='bold')
+    # 美化刻度与边框
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
+    
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=14)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(tick_font)
     
     # 图例
-    legend = plt.legend(loc='upper right', prop=legend_font, frameon=True, framealpha=0.9, shadow=True)
+    plt.legend(loc='upper right', prop=legend_font, 
+               frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
     
-    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
     plt.xlim(0, 200)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -139,20 +146,17 @@ def plot_loss_cn(data_dict, save_path="results/figure/loss_convergence_cn.png"):
 
 def plot_convergence_cn(data_dict, save_path="results/figure/map_convergence_cn.png"):
     ensure_dir(save_path)
+    
+    plt.style.use('seaborn-v0_8-white')
     plt.figure(figsize=(12, 8))
     
-    title_font = get_cn_font_props(size=20, weight='bold')
-    label_font = get_cn_font_props(size=16, weight='bold')
+    label_font = get_cn_font_props(size=20, weight='bold')
     legend_font = get_cn_font_props(size=14, weight='bold')
+    tick_font = get_cn_font_props(size=16, weight='bold')
 
-    # 1. 基准线
-    for name, df in data_dict.items():
-        if "集中式" in name or "Centralized" in name:
-            best = df['mAP50'].max()
-            style = get_method_style(name)
-            plt.axhline(y=best, color=style['color'], linestyle=style['linestyle'], 
-                       linewidth=style['linewidth'], alpha=0.8,
-                       label=style['label'])
+    # 1. 基准线 (统一使用 0.775)
+    plt.axhline(y=0.7661, color='#ff6666', linestyle='--', linewidth=2.5, alpha=0.9,
+               label='集中式基准 (上限)')
 
     # 2. 实验曲线
     for name, df in data_dict.items():
@@ -171,21 +175,29 @@ def plot_convergence_cn(data_dict, save_path="results/figure/map_convergence_cn.
         
         plt.plot(df[x_col], smooth, label=style['label'], 
                 color=style['color'], linestyle=style['linestyle'],
-                linewidth=style['linewidth'], alpha=1.0, zorder=zorder)
+                linewidth=3.0, alpha=1.0, zorder=zorder)
         
         plt.plot(df[x_col], df[y_col], color=style['color'], 
                 linewidth=1, alpha=0.15, zorder=zorder-1)
 
-    # plt.title("验证集 mAP@0.50 收敛曲线", fontproperties=title_font, pad=15)
     plt.xlabel("通信轮次", fontproperties=label_font)
     plt.ylabel("mAP@0.50 精度", fontproperties=label_font)
     
-    plt.xticks(fontsize=12, fontweight='bold')
-    plt.yticks(fontsize=12, fontweight='bold')
+    # 美化刻度与边框
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
     
-    legend = plt.legend(loc='lower right', prop=legend_font, frameon=True, framealpha=0.95, shadow=True)
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=14)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(tick_font)
     
-    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(loc='lower right', prop=legend_font, 
+               frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+    
+    plt.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
     plt.xlim(0, 200)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
@@ -193,13 +205,14 @@ def plot_convergence_cn(data_dict, save_path="results/figure/map_convergence_cn.
 
 def plot_efficiency_cn(data_dict, save_path="results/figure/efficiency_tradeoff_cn.png"):
     ensure_dir(save_path)
+    
+    plt.style.use('seaborn-v0_8-white')
     plt.figure(figsize=(10, 8))
     
-    title_font = get_cn_font_props(size=20, weight='bold')
-    label_font = get_cn_font_props(size=16, weight='bold')
-    # 文本标注字体
+    label_font = get_cn_font_props(size=20, weight='bold')
     text_font = get_cn_font_props(size=13, weight='bold') 
     legend_font = get_cn_font_props(size=14, weight='bold')
+    tick_font = get_cn_font_props(size=16, weight='bold')
     
     points = []
     for name, df in data_dict.items():
@@ -239,31 +252,203 @@ def plot_efficiency_cn(data_dict, save_path="results/figure/efficiency_tradeoff_
         t = plt.text(p['comm_gb'], p['map'] + 0.006, p['label'], 
                  ha='center', va='bottom', fontproperties=text_font, zorder=15)
 
-    plt.title("通信效率与模型精度权衡分析", fontproperties=title_font, pad=15)
+    # plt.title("通信效率与模型精度权衡分析", fontproperties=title_font, pad=15)
     plt.xlabel("总通信开销 (GB) [对数坐标]", fontproperties=label_font)
     plt.ylabel("最佳 mAP50 精度", fontproperties=label_font)
     
     plt.xscale('log')
-    plt.grid(True, which="both", linestyle='--', alpha=0.5)
-    plt.xticks(fontsize=12, fontweight='bold')
-    plt.yticks(fontsize=12, fontweight='bold')
+    
+    # 美化刻度与边框
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
+    
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=14)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontproperties(tick_font)
+    
+    # 效率图保留全网格更好看
+    plt.grid(True, which="both", linestyle='--', alpha=0.4, color='gray')
     
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys(), loc='lower right', prop=legend_font, frameon=True, shadow=True)
+    plt.legend(by_label.values(), by_label.keys(), loc='lower right', 
+               prop=legend_font, frameon=True, fancybox=True, shadow=True, 
+               framealpha=1.0, facecolor='white', edgecolor='#cccccc', borderpad=0.8)
     
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Saved CN Efficiency Plot to {save_path}")
+
+def plot_convergence_loss_cn(data_dict, save_path="results/figure/convergence_loss_cn.png"):
+    ensure_dir(save_path)
+    
+    plt.style.use('seaborn-v0_8-white')
+    fig, ax1 = plt.subplots(figsize=(12, 8))
+    
+    # 字体配置
+    label_font = get_cn_font_props(size=20, weight='bold')
+    legend_font = get_cn_font_props(size=14, weight='bold')
+    tick_font = get_cn_font_props(size=16, weight='bold')
+    
+    ax2 = ax1.twinx()
+
+    lines = []
+    labels = []
+
+    # 1. 绘制 Upper Bound (集中式基准上限)
+    # 淡红色虚线
+    l_bound = ax1.axhline(y=0.7661, color='#ff6666', linestyle='--', linewidth=2.5, alpha=0.9)
+    lines.append(l_bound)
+    labels.append('集中式基准 (上限)')
+
+    # 2. 绘制各方法曲线
+    for name, df in data_dict.items():
+        if "集中式" in name or "Centralized" in name: continue
+        
+        x_col = 'round' if 'round' in df.columns else 'epoch'
+        
+        y_map = df['mAP50'].rolling(window=5, min_periods=1).mean() if 'mAP50' in df.columns else None
+        
+        loss_col = 'avg_loss' if 'avg_loss' in df.columns else ('loss' if 'loss' in df.columns else None)
+        y_loss = df[loss_col].rolling(window=5, min_periods=1).mean() if loss_col else None
+
+        if y_map is None: continue
+
+        style = get_method_style(name)
+        color = style['color']
+        label_base = style['label']
+
+        # 绘制 mAP (实线, 左轴)
+        l1, = ax1.plot(df[x_col], y_map, color=color, linestyle='-', linewidth=3.0)
+        lines.append(l1)
+        labels.append(label_base) # 图例只显示方法名，不区分 mAP/Loss
+
+        # 绘制 Loss (点划线, 右轴) - 不加入图例
+        if y_loss is not None:
+            ax2.plot(df[x_col], y_loss, color=color, linestyle='--', linewidth=2.5, alpha=0.6)
+
+    # 设置轴标签 (取消标题)
+    ax1.set_xlabel("通信轮次", fontproperties=label_font)
+    ax1.set_ylabel("mAP@0.50 精度 (实线)", fontproperties=label_font)
+    ax2.set_ylabel("训练损失 (虚线)", fontproperties=label_font, rotation=270, labelpad=25)
+    
+    # 美化刻度与边框
+    for ax in [ax1, ax2]:
+        # 去掉顶部边框
+        ax.spines['top'].set_visible(False)
+        # 加粗其他边框
+        for spine in ['bottom', 'left', 'right']:
+            ax.spines[spine].set_linewidth(2.0)
+        
+        ax.tick_params(which='major', width=2.0, length=6, labelsize=14)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontproperties(tick_font)
+
+    # 网格线优化：只显示左轴的水平网格
+    ax1.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
+    ax1.grid(False, axis='x')
+    ax2.grid(False)
+
+    # 图例优化：放在图表内部，美观样板
+    ax1.legend(lines, labels, loc='center right', prop=legend_font, 
+               frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Saved CN Cross Plot to {save_path}")
+
+def plot_convergence_loss_en(data_dict, save_path="results/figure/convergence_loss_en.png"):
+    ensure_dir(save_path)
+    
+    plt.style.use('seaborn-v0_8-white')
+    fig, ax1 = plt.subplots(figsize=(12, 8))
+    
+    ax2 = ax1.twinx()
+
+    lines = []
+    labels = []
+
+    # 1. Upper Bound
+    l_bound = ax1.axhline(y=0.7661, color='#ff6666', linestyle='--', linewidth=2.5, alpha=0.9)
+    lines.append(l_bound)
+    labels.append('Centralized (Upper Bound)')
+
+    # 2. Experiments
+    # Note: For EN, keys are English. get_method_style handles "Centralized", "Ours", "Quant" checks.
+    # But it returns Chinese labels. We will manually handle labels here or use a simplified approach.
+    
+    for name, df in data_dict.items():
+        if "Centralized" in name: continue
+        
+        x_col = 'round' if 'round' in df.columns else 'epoch'
+        y_map = df['mAP50'].rolling(window=5, min_periods=1).mean() if 'mAP50' in df.columns else None
+        
+        loss_col = 'avg_loss' if 'avg_loss' in df.columns else ('loss' if 'loss' in df.columns else None)
+        y_loss = df[loss_col].rolling(window=5, min_periods=1).mean() if loss_col else None
+
+        if y_map is None: continue
+
+        style = get_method_style(name)
+        color = style['color']
+        # Simple English Label: first part before '('
+        # e.g. "FedAvg (YOLOv8s, 32-bit)" -> "FedAvg"
+        label_en = name.split('(')[0].strip()
+        # Handle "Ours" if specific replacement needed, otherwise use name part
+        if "Ours" in name: label_en = "SA-FLQ" # Or "Ours"
+
+        # Plot mAP (Solid, Left Axis)
+        l1, = ax1.plot(df[x_col], y_map, color=color, linestyle='-', linewidth=3.0)
+        lines.append(l1)
+        labels.append(label_en)
+
+        # Plot Loss (Dashed, Right Axis)
+        if y_loss is not None:
+            ax2.plot(df[x_col], y_loss, color=color, linestyle='--', linewidth=2.5, alpha=0.6)
+
+    # Labels
+    ax1.set_xlabel("Communication Rounds", fontsize=20, fontweight='bold')
+    ax1.set_ylabel("mAP@0.50 (Solid)", fontsize=20, fontweight='bold')
+    ax2.set_ylabel("Training Loss (Dashed)", fontsize=20, fontweight='bold', rotation=270, labelpad=25)
+    
+    # Spines & Ticks
+    for ax in [ax1, ax2]:
+        ax.spines['top'].set_visible(False)
+        for spine in ['bottom', 'left', 'right']:
+            ax.spines[spine].set_linewidth(2.0)
+        
+        ax.tick_params(which='major', width=2.0, length=6, labelsize=16)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight('bold')
+
+    # Grid (Left Y only)
+    ax1.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
+    ax1.grid(False, axis='x')
+    ax2.grid(False)
+
+    # Legend
+    ax1.legend(lines, labels, loc='center right', fontsize=14, 
+               frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Saved EN Cross Plot to {save_path}")
 
 # ================== 英文绘图函数 (EN Functions - Keep Original Logic) ==================
 # 保持之前的英文逻辑或稍作简化
 
 def plot_loss_en(data_dict, save_path="results/figure/loss_convergence.png"):
     ensure_dir(save_path)
-    plt.figure(figsize=(10, 6))
+    
+    plt.style.use('seaborn-v0_8-white')
+    plt.figure(figsize=(12, 8))
+    
     colors = sns.color_palette("tab10", n_colors=len(data_dict))
     idx = 0
+    
     for name, df in data_dict.items():
         if "Centralized" in name: continue
         x_col = 'round' if 'round' in df.columns else 'epoch'
@@ -271,46 +456,84 @@ def plot_loss_en(data_dict, save_path="results/figure/loss_convergence.png"):
         if y_col not in df.columns: continue
         
         color = colors[idx]; idx += 1
-        plt.plot(df[x_col], df[y_col].rolling(5).mean(), label=name, color=color, linewidth=2)
-        plt.plot(df[x_col], df[y_col], color=color, alpha=0.2)
+        
+        # Smooth
+        plt.plot(df[x_col], df[y_col].rolling(5).mean(), label=name, color=color, linewidth=3.0)
+        # Background
+        plt.plot(df[x_col], df[y_col], color=color, alpha=0.15, linewidth=0.8)
 
-    plt.title("Training Loss Convergence", fontsize=14)
-    plt.xlabel("Communication Rounds", fontsize=12)
-    plt.ylabel("Training Loss", fontsize=12)
-    plt.legend()
-    plt.grid(True, linestyle='--')
-    plt.savefig(save_path)
+    # Labels (No Title)
+    plt.xlabel("Communication Rounds", fontsize=20, fontweight='bold')
+    plt.ylabel("Training Loss", fontsize=20, fontweight='bold')
+    
+    # Spines
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
+        
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=16)
+    # Ensure tick labels are bold (needs trick or loop)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight('bold')
+
+    plt.legend(loc='upper right', fontsize=14, frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+    
+    plt.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Saved EN Loss Plot to {save_path}")
 
 def plot_convergence_en(data_dict, save_path="results/figure/map_convergence.png"):
     ensure_dir(save_path)
-    plt.figure(figsize=(10, 6))
+    
+    plt.style.use('seaborn-v0_8-white')
+    plt.figure(figsize=(12, 8))
+    
     colors = sns.color_palette("tab10", n_colors=len(data_dict))
     idx = 0
     
-    # Baseline
-    for name, df in data_dict.items():
-        if "Centralized" in name:
-            plt.axhline(y=df['mAP50'].max(), color='r', linestyle='--', label=f"{name} Best")
-            
+    # 1. Upper Bound (Fixed 0.775)
+    plt.axhline(y=0.7661, color='#ff6666', linestyle='--', linewidth=2.5, alpha=0.9, 
+                label="Centralized (Upper Bound)")
+
+    # 2. Experiments
     for name, df in data_dict.items():
         if "Centralized" in name: continue
         x_col = 'round' if 'round' in df.columns else 'epoch'
         color = colors[idx]; idx += 1
-        plt.plot(df[x_col], df['mAP50'].rolling(5).mean(), label=name, color=color, linewidth=2)
-        plt.plot(df[x_col], df['mAP50'], color=color, alpha=0.2)
+        
+        plt.plot(df[x_col], df['mAP50'].rolling(5).mean(), label=name, color=color, linewidth=3.0)
+        plt.plot(df[x_col], df['mAP50'], color=color, alpha=0.15, linewidth=1.0)
 
-    plt.title("Validation mAP@0.50 Convergence", fontsize=14)
-    plt.xlabel("Communication Rounds", fontsize=12)
-    plt.ylabel("mAP@0.50", fontsize=12)
-    plt.legend()
-    plt.grid(True, linestyle='--')
-    plt.savefig(save_path)
+    plt.xlabel("Communication Rounds", fontsize=20, fontweight='bold')
+    plt.ylabel("mAP@0.50", fontsize=20, fontweight='bold')
+    
+    # Spines
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
+        
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=16)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight('bold')
+
+    plt.legend(loc='lower right', fontsize=14, frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+    
+    plt.grid(True, axis='y', linestyle='--', alpha=0.4, color='gray')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Saved EN Convergence Plot to {save_path}")
 
 def plot_efficiency_en(data_dict, save_path="results/figure/efficiency_tradeoff.png"):
     ensure_dir(save_path)
-    plt.figure(figsize=(9, 7))
+    
+    plt.style.use('seaborn-v0_8-white')
+    plt.figure(figsize=(10, 8))
+    
     points = []
     for name, df in data_dict.items():
         if "Centralized" in name: continue
@@ -326,15 +549,29 @@ def plot_efficiency_en(data_dict, save_path="results/figure/efficiency_tradeoff.
         points.append({'name': name, 'gb': total_gb, 'map': df['mAP50'].max()})
         
     for p in points:
-        plt.scatter(p['gb'], p['map'], label=p['name'], s=100)
-        plt.text(p['gb'], p['map'], p['name'].split('(')[0], ha='center', va='bottom')
+        plt.scatter(p['gb'], p['map'], label=p['name'], s=250, alpha=0.9, edgecolors='white', linewidth=2)
+        plt.text(p['gb'], p['map'] + 0.005, p['name'].split('(')[0], ha='center', va='bottom', fontsize=13, fontweight='bold')
         
-    plt.title("Communication Efficiency vs. Accuracy", fontsize=14)
-    plt.xlabel("Total Communication Cost (GB)", fontsize=12)
-    plt.ylabel("Best mAP50", fontsize=12)
+    plt.xlabel("Total Communication Cost (GB)", fontsize=20, fontweight='bold')
+    plt.ylabel("Best mAP50", fontsize=20, fontweight='bold')
     plt.xscale('log')
-    plt.grid(True, linestyle='--')
-    plt.savefig(save_path)
+    
+    # Spines
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    for spine in ['bottom', 'left', 'right']:
+        ax.spines[spine].set_linewidth(2.0)
+        
+    ax.tick_params(which='major', width=2.0, length=6, labelsize=16)
+    for label in ax.get_xticklabels() + ax.get_yticklabels():
+        label.set_fontweight('bold')
+
+    plt.legend(loc='lower right', fontsize=14, frameon=True, fancybox=True, shadow=True, framealpha=1.0, 
+               facecolor='white', edgecolor='#cccccc', borderpad=0.8)
+    
+    plt.grid(True, which="both", linestyle='--', alpha=0.4, color='gray')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
     print(f"Saved EN Efficiency Plot to {save_path}")
 
 def generate_figure3(model_path, val_images_dir):
@@ -371,10 +608,14 @@ def main():
         plot_loss_cn(data)
         plot_convergence_cn(data)
         plot_efficiency_cn(data)
+        # 生成中文版的 Cross 图
+        plot_convergence_loss_cn(data)
     else:
         plot_loss_en(data)
         plot_convergence_en(data)
         plot_efficiency_en(data)
+        # 生成英文版的 Cross 图
+        plot_convergence_loss_en(data)
         
     print("Done.")
 

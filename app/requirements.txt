@@ -1,0 +1,20 @@
+# 核心依赖
+torch>=1.10.0
+torchvision
+numpy
+requests
+fastapi
+uvicorn
+pydantic
+PyYAML
+
+# YOLOv8 依赖
+ultralytics>=8.0.0
+opencv-python-headless
+psutil
+matplotlib
+tqdm
+pandas
+scipy
+seaborn
+

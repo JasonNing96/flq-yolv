@@ -1,0 +1,43 @@
+# Jetson (ARM64/Tegra) 专用 Dockerfile
+# 基础镜像：NVIDIA L4T PyTorch
+# 请根据您的 JetPack 版本选择合适的 tag
+# JetPack 5.1 (L4T R35.2.1) -> r35.2.1-pth2.0-py3
+# JetPack 4.6 (L4T R32.7.1) -> r32.7.1-pth1.10-py3
+FROM nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3
+
+WORKDIR /workspace
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV OMP_NUM_THREADS=1
+
+# 安装系统依赖 (OpenCV 等需要)
+RUN apt-get update && apt-get install -y \
+    libopencv-dev \
+    python3-opencv \
+    git \
+    curl \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制 requirements
+COPY app/requirements.txt .
+
+# 调整依赖：
+# 1. Jetson 上通常自带了 PyTorch 和 Torchvision，避免 pip 重新安装覆盖
+# 2. OpenCV 推荐使用 apt 安装的 python3-opencv 或特定预编译包
+RUN sed -i '/torch/d' requirements.txt && \
+    sed -i '/opencv/d' requirements.txt
+
+# 安装其他依赖
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# 额外安装 ultralytics (如果 requirements.txt 里有 issues)
+# Ultralytics 可能会尝试拉取 opencv-python，如果失败可以忽略
+RUN pip3 install --no-cache-dir ultralytics
+
+# 复制项目代码
+COPY . /workspace/
+
+# Jetson 默认使用 python3
+CMD ["python3", "-m", "app.runner", "client", "--id", "1"]
+

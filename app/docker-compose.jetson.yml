@@ -1,0 +1,54 @@
+version: '3.8'
+
+# Jetson 专用配置
+# 注意：Jetson 上通常每个设备只有一个 GPU，所以客户端需要分别部署在不同设备上
+# 或者使用 CPU 模式（不推荐）
+
+services:
+  # ----------------------------------------
+  # FLQ Server (Jetson)
+  # ----------------------------------------
+  server:
+    build:
+      context: ..
+      dockerfile: app/Dockerfile.jetson
+    image: flq-fed-server-jetson:latest
+    container_name: flq-server-jetson
+    ports:
+      - "8087:8087"
+    volumes:
+      - ../outputs:/workspace/outputs
+      - ../data:/workspace/data
+      - ../models:/workspace/models
+      - ../app:/workspace/app
+    command: python3 -m app.runner server
+    # Jetson 使用 runtime: nvidia (不是 deploy.resources)
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+  # ----------------------------------------
+  # FLQ Client 1 (Jetson)
+  # 注意：如果多个客户端在同一 Jetson 上，需要共享 GPU
+  # 或者使用不同的 Jetson 设备
+  # ----------------------------------------
+  client1:
+    build:
+      context: ..
+      dockerfile: app/Dockerfile.jetson
+    image: flq-fed-client-jetson:latest
+    container_name: flq-client-1-jetson
+    depends_on:
+      - server
+    volumes:
+      - ../outputs:/workspace/outputs
+      - ../data:/workspace/data
+      - ../models:/workspace/models
+      - ../app:/workspace/app
+    command: python3 -m app.runner client --id 1 --server http://server:8087
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+

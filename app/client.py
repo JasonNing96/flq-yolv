@@ -1,26 +1,36 @@
 """
 FLQ-Fed 联邦学习客户端
-简化版 - 线性流程，易于调试
+核心逻辑移植自 flq_yolov_v8.py (FreezeBN Version)
 """
 import os
 import time
 import torch
+import torch.nn as nn
+import torch.optim as optim
 import yaml
 import requests
+import gc
+import numpy as np
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Tuple
+from types import SimpleNamespace
+
+# Ultralytics 组件
 from ultralytics import YOLO
+from ultralytics.utils import DEFAULT_CFG
+from ultralytics.cfg import get_cfg
+from ultralytics.data import build_yolo_dataset, build_dataloader
+from ultralytics.utils.loss import v8DetectionLoss
+from ultralytics.data.utils import check_det_dataset
+from torch.cuda.amp import autocast, GradScaler
 
 from .config import Config
 from .model_utils import (
-    compute_model_size,
-    quantize_vector, dequantize_vector,
-    state_dict_to_vector, vector_to_state_dict,
-    state_dict_to_grad_vector, grad_vector_to_state_dict,
-    ErrorFeedback
+    FLQCompressor,
+    state_dict_to_vector,
+    state_dict_to_grad_vector
 )
-
 
 # ==================== 全局配置 ====================
 
@@ -43,35 +53,161 @@ def _log(msg: str):
     print(f"[{_ts()}] {msg}")
 
 
+def seed_everything(seed: int = 42):
+    import random
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+# ==================== 训练内核 (移植自 v8) ====================
+
+class ManualClientTrainer:
+    """
+    手动训练循环，支持 FreezeBN
+    移植自 flq_yolov_v8.py
+    """
+    def __init__(self, model_path: str, data_yaml: str, device: str, batch: int, imgsz: int):
+        self.device = device
+        self.data_yaml = data_yaml
+        self.model_path = model_path
+        self.batch = batch
+        self.imgsz = imgsz
+        
+        # 加载配置
+        self.cfg = get_cfg(DEFAULT_CFG)
+        self.cfg.data = data_yaml
+        self.cfg.imgsz = imgsz
+        self.cfg.batch = batch
+        
+        # 检查数据集
+        self.data_info = check_det_dataset(data_yaml)
+        self.train_path = self.data_info['train']
+        self.batch_size = batch
+        
+        # 压缩器
+        self.compressor = FLQCompressor(device)
+
+    def train_epoch(self, global_sd: Dict, local_epochs: int, lr: float) -> Tuple[Dict, dict, dict]:
+        """执行本地训练"""
+        # 临时加载模型以获取结构
+        temp_wrapper = YOLO(self.model_path)
+        model = temp_wrapper.model
+        del temp_wrapper
+        torch.cuda.empty_cache()
+
+        if hasattr(model, 'args') and isinstance(model.args, dict):
+            model.args = SimpleNamespace(**model.args)
+        
+        # 加载全局参数
+        model.load_state_dict(global_sd)
+        model.to(self.device)
+        
+        # ================== FREEZE BN LOGIC (v8 核心) ==================
+        model.train()
+        for module in model.modules():
+            if isinstance(module, nn.BatchNorm2d):
+                module.track_running_stats = False # Critical: Stop tracking stats
+                module.eval() # Freeze behavior
+        # ===============================================================
+
+        for param in model.parameters():
+            param.requires_grad = True
+        
+        # 初始化 Loss
+        loss_fn = v8DetectionLoss(model)
+        if hasattr(loss_fn, 'hyp'):
+            if isinstance(loss_fn.hyp, dict):
+                loss_fn.hyp = SimpleNamespace(**loss_fn.hyp)
+            # 默认超参
+            if not hasattr(loss_fn.hyp, 'box'): loss_fn.hyp.box = 7.5
+            if not hasattr(loss_fn.hyp, 'cls'): loss_fn.hyp.cls = 0.5
+            if not hasattr(loss_fn.hyp, 'dfl'): loss_fn.hyp.dfl = 1.5
+
+        if hasattr(loss_fn, 'proj'):
+            loss_fn.proj = loss_fn.proj.to(self.device)
+
+        # 优化器
+        scaler = GradScaler()
+        optimizer = optim.SGD(model.parameters(), lr=lr,
+                              momentum=0.0, weight_decay=5e-4)
+
+        # 构建 DataLoader (每次重新构建以节省持久显存)
+        dataset = build_yolo_dataset(
+            self.cfg, self.train_path, self.batch_size, self.data_info, mode="train", rect=False, stride=32
+        )
+        loader = build_dataloader(
+            dataset, self.batch_size, workers=0, shuffle=True, rank=-1)
+
+        loss_stats = {"box": [], "cls": [], "dfl": []}
+
+        # 训练循环
+        for epoch in range(local_epochs):
+            for batch_idx, batch in enumerate(loader):
+                batch['img'] = batch['img'].to(self.device, non_blocking=True).float() / 255.0
+                for k in batch:
+                    if k != 'img' and isinstance(batch[k], torch.Tensor):
+                        batch[k] = batch[k].to(self.device)
+
+                optimizer.zero_grad()
+                with autocast(enabled=True):
+                    preds = model(batch['img'])
+                    loss, loss_items = loss_fn(preds, batch)
+
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                nn.utils.clip_grad_norm_(model.parameters(), 10.0)
+                scaler.step(optimizer)
+                scaler.update()
+
+                loss_stats["box"].append(loss_items[0].item())
+                loss_stats["cls"].append(loss_items[1].item())
+                loss_stats["dfl"].append(loss_items[2].item())
+                
+                # 显存清理
+                del preds, loss, loss_items
+                for k in list(batch.keys()):
+                    if isinstance(batch[k], torch.Tensor):
+                        del batch[k]
+                del batch
+                
+                if (batch_idx + 1) % 100 == 0:
+                    torch.cuda.empty_cache()
+
+        # 提取训练后的参数
+        final_sd = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
+        # 资源清理
+        optimizer.zero_grad(set_to_none=True)
+        del model, loss_fn, optimizer, scaler, loader, dataset
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+        metadata = {
+            "final_loss": np.mean(loss_stats["box"]) if loss_stats["box"] else 0.0,
+            "metrics": {} # 手动训练暂不包含 eval metrics，由 server 统一 eval
+        }
+        return final_sd, loss_stats, metadata
+
+
 # ==================== 核心流程 ====================
 
-def pull_global_model(model: YOLO) -> tuple:
+def pull_global_model(model_path: str) -> tuple:
     """
-    从服务器拉取全局模型
-    
-    Returns:
-        current_round: 当前轮次
-        is_done: 是否完成训练
-        global_state_dict: 全局模型的 state_dict
+    从服务器拉取全局模型参数
     """
     try:
-        response = requests.get(f"{SERVER_URL}/global", timeout=10)
+        response = requests.get(f"{SERVER_URL}/global", timeout=30)
         response.raise_for_status()
         data = response.json()
         
         # 反序列化 state_dict
         global_state_dict = {k: torch.tensor(v) for k, v in data['state_dict'].items()}
-        
-        # 如果服务器下发的是量化模型，则需要反量化
-        downlink_quant_bits = data.get('downlink_quant_bits', 0)
-        if downlink_quant_bits > 0:
-            _log(f"📥 服务器下发 {downlink_quant_bits}-bit 量化模型，进行反量化...")
-            global_vector = state_dict_to_vector(global_state_dict)
-            # 这里假设服务器已经反量化回全精度，客户端直接加载即可
-            # 如果服务器下发的是量化值，这里需要 dequantize_vector
-            # 但目前服务器端是先量化再反量化，所以客户端直接加载即可
-        
-        model.model.load_state_dict(global_state_dict, strict=False)
         
         current_round = data['round']
         is_done = data['done']
@@ -84,139 +220,59 @@ def pull_global_model(model: YOLO) -> tuple:
         raise
 
 
-def train_local(model: YOLO, round_id: int, config: Config):
-    """
-    本地训练
-    
-    Args:
-        model: YOLO模型
-        round_id: 当前轮次
-        config: 配置对象
-    """
-    _log(f"🎯 开始本地训练 Round {round_id}...")
-    
-    try:
-        results = model.train(
-            data=DATA_YAML,
-            epochs=config.local_epochs,
-            batch=config.batch_size,
-            imgsz=640,
-            device=config.device,
-            workers=config.workers,
-            project=OUTPUT_DIR,
-            name=f"round_{round_id}",
-            exist_ok=True,
-            verbose=config.verbose,
-            val=config.enable_val,
-            plots=config.enable_plots
-        )
-        
-        # 提取关键指标
-        metrics = results.results_dict if hasattr(results, 'results_dict') else {}
-        map50 = metrics.get('metrics/mAP50(B)', 0.0)
-        
-        _log(f"✅ 本地训练完成 (mAP50: {map50:.3f})")
-        return results
-        
-    except Exception as e:
-        _log(f"❌ 训练失败: {e}")
-        raise
-
-
 def push_update(
-    model: YOLO,
+    trainer: ManualClientTrainer,
+    local_sd: Dict,
+    global_sd: Dict,
     n_samples: int,
     round_id: int,
-    train_results: Any,
-    last_global_state: Dict[str, Any],
-    config: Config,
-    error_feedback_instance: Optional[ErrorFeedback] = None
+    metadata: Dict,
+    config: Config
 ):
     """
-    上传本地更新到服务器
-    
-    Args:
-        model: 训练后的模型
-        n_samples: 本地样本数
-        round_id: 当前轮次
-        train_results: 本地训练结果对象
-        last_global_state: 上一轮的全局模型 state_dict
-        config: 配置对象
-        error_feedback_instance: 误差反馈实例
+    压缩并上传更新
     """
     try:
-        local_state_dict = model.model.state_dict()
+        # 1. 计算差值 delta = local - global
+        # 使用 compressor 的 helper
+        flat_global = trainer.compressor.flatten_params(global_sd) # on device
+        flat_local = trainer.compressor.flatten_params(local_sd)   # on device
+        delta = flat_local - flat_global
         
-        # 计算梯度差异
-        grad_vector = state_dict_to_grad_vector(local_state_dict, last_global_state)
+        # 2. 量化
+        bits = config.quant_bits if config.quant_enabled else 32
+        q_delta, bit_cost, scale, zero_point = trainer.compressor.quantize_update(delta, bits)
         
-        bits_up = 0.0
-        quant_params = None
+        # 3. 序列化
+        serialized_grad = q_delta.cpu().tolist()
         
-        if config.aggregation_mode == "flq-fed" and config.quant_enabled:
-            _log(f"🗜️  进行 {config.quant_bits}-bit 量化...")
-            
-            if error_feedback_instance and config.error_feedback_enabled:
-                quantized_grad_vector, scale, zero_point = \
-                    error_feedback_instance.compress_with_feedback(grad_vector, bits=config.quant_bits)
-            else:
-                quantized_grad_vector, scale, zero_point = \
-                    quantize_vector(grad_vector, bits=config.quant_bits)
-            
-            # 序列化量化后的梯度向量
-            serialized_grad_vector = quantized_grad_vector.cpu().tolist()
-            
-            # 计算上传比特数
-            num_params = grad_vector.numel()
-            bits_up = num_params * config.quant_bits
-            
-            quant_params = {
-                "scale": scale,
-                "zero_point": zero_point,
-                "bits": config.quant_bits
-            }
-            
-            _log(f"✅ 量化完成，上传 {config.quant_bits}-bit 梯度差异。")
-        else:
-            # FedAvg 或未启用量化，上传全精度梯度差异
-            _log("⬆️  上传全精度梯度差异...")
-            serialized_grad_vector = grad_vector.cpu().tolist()
-            
-            # 计算上传比特数 (32-bit 浮点数)
-            num_params = grad_vector.numel()
-            bits_up = num_params * 32
+        # 4. 构建 payload
+        quant_params = {
+            "scale": scale,
+            "zero_point": zero_point,
+            "bits": bits
+        }
         
-        # 提取训练指标
-        metrics = {}
-        if hasattr(train_results, 'results_dict'):
-            results_dict = train_results.results_dict
-            metrics['map50'] = results_dict.get('metrics/mAP50(B)', 0.0)
-            metrics['map'] = results_dict.get('metrics/mAP50-95(B)', 0.0)
-            metrics['precision'] = results_dict.get('metrics/precision(B)', 0.0)
-            metrics['recall'] = results_dict.get('metrics/recall(B)', 0.0)
-            metrics['loss'] = results_dict.get('train/box_loss', 0.0) + \
-                              results_dict.get('train/cls_loss', 0.0) + \
-                              results_dict.get('train/dfl_loss', 0.0)
-        
-        # 发送更新
         payload = {
             "client_id": CLIENT_ID,
-            "grad_vector": serialized_grad_vector,
+            "grad_vector": serialized_grad,
             "n_samples": n_samples,
             "round_id": round_id,
-            "metrics": metrics,
-            "bits_up": bits_up,
+            "metrics": metadata.get("metrics", {}),
+            "bits_up": bit_cost,
             "quant_params": quant_params
         }
         
-        _log(f"📤 上传本地更新 (mAP50: {metrics.get('map50', 0.0):.3f}, Bits Up: {bits_up / (1024**2) / 8:.2f} MB)...")
+        _log(f"📤 上传本地更新 (Bits Up: {bit_cost / 1e6:.2f} Mb)...")
         response = requests.post(f"{SERVER_URL}/update", json=payload, timeout=60)
-        if not response.ok:
-            _log(f"⚠️  上传失败详情: {response.text}")
         response.raise_for_status()
         
         result = response.json()
         _log(f"✅ 上传成功 (Round {result['round']}, 缓冲={result['buffered']})")
+        
+        # 清理显存
+        del flat_global, flat_local, delta, q_delta
+        torch.cuda.empty_cache()
         
         return result
         
@@ -242,16 +298,13 @@ def count_samples(data_yaml_path: str) -> int:
 def start_client(client_id: int, server_url: str = None, config_path: Optional[str] = None):
     """
     启动联邦学习客户端
-    
-    Args:
-        client_id: 客户端ID (1, 2, 3, ...)
-        server_url: 服务器地址（可选）
-        config_path: 配置文件路径（可选）
     """
     global CLIENT_ID, SERVER_URL, DATA_YAML, OUTPUT_DIR
     
+    seed_everything(42)
+    
     print("="*70)
-    print(f"🚀 FLQ客户端 #{client_id}")
+    print(f"🚀 FLQ客户端 #{client_id} (v8: FreezeBN)")
     print("="*70)
     
     # 加载配置
@@ -265,73 +318,59 @@ def start_client(client_id: int, server_url: str = None, config_path: Optional[s
     
     _log(f"🌐 服务器: {SERVER_URL}")
     _log(f"📁 数据: {DATA_YAML}")
-    _log(f"📂 输出: {OUTPUT_DIR}")
     _log(f"🖥️  设备: {config.device}")
     
-    # 检查数据文件
     if not os.path.exists(DATA_YAML):
         _log(f"❌ 数据配置不存在: {DATA_YAML}")
-        _log(f"💡 提示: 请先运行 python scripts/split_dataset.py")
         return
     
-    # 统计样本数
     n_samples = count_samples(DATA_YAML)
     _log(f"📊 本地样本数: {n_samples}\n")
     
-    # 初始化模型
-    _log("📦 初始化模型...")
-    model_path = PROJECT_ROOT / config.model_name
-    model = YOLO(str(model_path))
+    # 初始化 Trainer
+    model_path = str(PROJECT_ROOT / config.model_name)
+    trainer = ManualClientTrainer(
+        model_path, DATA_YAML, config.device, config.batch_size, 640
+    )
     
-    # 读取类别数
-    with open(DATA_YAML) as f:
-        data_cfg = yaml.safe_load(f)
-    nc = data_cfg.get('nc', 80)
-    
-    from ultralytics.nn.tasks import DetectionModel
-    model.model = DetectionModel(model.model.yaml, ch=3, nc=nc)
-    _log(f"✅ 模型初始化完成 (nc={nc})\n")
-    
-    # 主循环
     last_round = -1
-    last_global_state = None
-    error_feedback_instance = ErrorFeedback() if config.error_feedback_enabled else None
     
     while True:
         try:
             # 1. 拉取全局模型
-            current_round, is_done, global_state_dict = pull_global_model(model)
-            last_global_state = global_state_dict # 保存当前全局模型，用于计算梯度差异
+            current_round, is_done, global_sd = pull_global_model(model_path)
             
-            # 检查是否完成
             if is_done:
                 print("\n" + "="*70)
-                _log("🎉 所有联邦训练轮次已完成！")
-                _log(f"📁 训练结果: {OUTPUT_DIR}")
+                _log("🎉 训练完成！")
                 print("="*70)
                 break
             
-            # 检查是否已训练过当前轮次
             if current_round == last_round:
-                _log("⏳ 等待服务器聚合...")
                 time.sleep(5)
                 continue
             
-            # 2. 本地训练
-            train_results = train_local(model, current_round, config)
+            _log(f"🎯 开始本地训练 Round {current_round} (LR={0.01 * (0.98 ** current_round):.5f})...")
+            
+            # 2. 本地训练 (v8 逻辑)
+            cur_lr = 0.01 * (0.98 ** current_round)
+            local_sd, _, metadata = trainer.train_epoch(
+                global_sd, config.local_epochs, lr=cur_lr
+            )
             
             # 3. 上传更新
-            response = push_update(model, n_samples, current_round, train_results, last_global_state, config, error_feedback_instance)
+            response = push_update(
+                trainer, local_sd, global_sd, n_samples, current_round, metadata, config
+            )
             
-            # 更新轮次记录
             last_round = current_round
             
-            # 检查服务器返回的完成标志
             if response.get("done", False):
-                print("\n" + "="*70)
-                _log("🎉 联邦训练完成（服务器通知）")
-                print("="*70)
                 break
+                
+            # 定期重置误差反馈 (v8 逻辑: 每10轮重置)
+            if (current_round + 1) % 10 == 0:
+                trainer.compressor.reset_error()
             
             _log(f"✅ Round {current_round} 完成\n")
         
@@ -341,9 +380,9 @@ def start_client(client_id: int, server_url: str = None, config_path: Optional[s
         
         except Exception as e:
             _log(f"❌ 错误: {e}")
-            _log("🔄 5秒后重试...")
+            import traceback
+            traceback.print_exc()
             time.sleep(5)
-
 
 if __name__ == "__main__":
     import sys
@@ -352,4 +391,3 @@ if __name__ == "__main__":
         sys.exit(1)
     
     start_client(int(sys.argv[1]))
-
