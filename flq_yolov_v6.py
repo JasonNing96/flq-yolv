@@ -149,6 +149,16 @@ class FLQCompressor:
         # Error Feedback
         if self.local_error is None:
             self.local_error = torch.zeros_like(delta_vec)
+        
+        # Safety: Check for NaNs in delta_vec or local_error
+        if torch.isnan(delta_vec).any() or torch.isinf(delta_vec).any():
+            print("   [Warning] NaN/Inf detected in update vector! Zeroing update.")
+            delta_vec = torch.zeros_like(delta_vec)
+        
+        if torch.isnan(self.local_error).any() or torch.isinf(self.local_error).any():
+            print("   [Warning] NaN/Inf detected in error feedback! Resetting error.")
+            self.local_error.zero_()
+
         target = delta_vec + self.local_error
 
         if bits >= 32:
@@ -163,15 +173,30 @@ class FLQCompressor:
             sign[sign == 0] = 1.0
             quantized = sign * scale
             self.local_error = target - quantized
+            # Error Decay: 防止误差无限累积
+            self.local_error *= 0.9
             return quantized, num_params + 32 # 1 bit per param + 32 bit scale
         else:
-            # k-bit quantization
+            # k-bit quantization (Bucket/Chunk optimization could be added here)
+            # Current: Global Min-Max
             mn, mx = target.min(), target.max()
-            scale = (mx - mn) / (2**bits - 1 + 1e-8)
-            zero = -mn / (scale + 1e-8)
+            
+            # Safety check for scale
+            if torch.isnan(mn) or torch.isnan(mx) or (mx - mn) == 0:
+                scale = 1.0
+                zero = 0.0
+            else:
+                scale = (mx - mn) / (2**bits - 1 + 1e-8)
+                zero = -mn / (scale + 1e-8)
+            
             q = torch.clamp(torch.round(target / scale + zero), 0, 2**bits - 1)
             dq = (q - zero) * scale
+            
             self.local_error = target - dq
+            # Error Decay: 大幅加强衰减 (0.95 -> 0.5) 
+            # 8-bit 下误差积累是导致 NaN 的核心原因，必须激进衰减
+            self.local_error *= 0.5
+            
             return dq, num_params * bits + 32
 
 # ====================== 3. 训练内核: Stateless Manual Trainer ======================
@@ -229,9 +254,11 @@ class ManualClientTrainer:
             loss_fn.proj = loss_fn.proj.to(self.device)
 
         scaler = GradScaler()
-        # Fix 4: Low LR + No Momentum
-        optimizer = optim.SGD(model.parameters(), lr=lr,
-                              momentum=0.0, weight_decay=5e-4)
+        # Fix 4: Low LR + Momentum (Matched to Centralized Benchmark)
+        # 初始 LR 降低10倍 (0.01 -> 0.001) 以防止初期梯度爆炸
+        # Weight Decay 适当降低 (5e-4 -> 1e-4) 减少对权重的过分约束
+        optimizer = optim.SGD(model.parameters(), lr=lr * 0.1,
+                              momentum=0.9, weight_decay=1e-4)
 
         # 每次训练时重新创建 DataLoader（避免持久化占用显存）
         dataset = build_yolo_dataset(
@@ -379,13 +406,20 @@ def run_federated_flq(
         "bits_up_raw", "bits_up_compressed", "latency_up_sim",
         "total_round_time"
     ]
-    # 动态添加 client loss 列
+        # 动态添加 client loss 列
     for i in range(len(client_yaml_list)):
         csv_headers.append(f"client_{i}_loss")
     
     # 初始化 CSV（如果不存在或不需要恢复）
     ckpt_path = out_dir / "checkpoint_latest.pt"
-    if not resume or not ckpt_path.exists():
+    
+    # 如果指定 no-resume，强制覆盖 CSV
+    if not resume and csv_path.exists():
+        print(f"   [Info] --no-resume specified. Overwriting existing CSV: {csv_path}")
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(csv_headers)
+    elif not csv_path.exists():
         with open(csv_path, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(csv_headers)
@@ -431,6 +465,13 @@ def run_federated_flq(
     global_sd = {k: v.cpu().clone() for k, v in init_model.model.state_dict().items()}
     template_sd = copy.deepcopy(global_sd)
     
+    # 显式检查初始模型是否含有 NaN
+    for k, v in global_sd.items():
+        if torch.isnan(v).any():
+            print(f"   [Error] NaN detected in initial model weights: {k}")
+            # 处理方式：重置为 0 或报错
+            v.zero_()
+    
     del init_model
     gc.collect()
     if warmup_dir.exists(): shutil.rmtree(warmup_dir)
@@ -473,7 +514,12 @@ def run_federated_flq(
         print(f"   [Downlink] {bits_down_compressed/1e6:.2f} Mb, Latency: {latency_down:.3f}s")
 
         # == 本地训练 ==
-        cur_lr = 0.01 * (0.98 ** r)
+        # LR Schedule: 前5轮 warmup，后续保持低 LR
+        if r < 5:
+            cur_lr = 0.001 * (r + 1) / 5
+        else:
+            cur_lr = 0.001 * (0.95 ** (r - 5))
+            
         client_updates_dense = []
         round_loss_list = []
         
@@ -539,18 +585,33 @@ def run_federated_flq(
         # == 服务器聚合 ==
         print("   [Server] Aggregating...")
         # 将 client_updates 移回 GPU 进行聚合
-        client_updates_gpu = [u.to(device) for u in client_updates_dense]
-        stack_updates = torch.stack(client_updates_gpu)
-        avg_update = stack_updates.mean(dim=0)
-        flat_global_new = server_helper.flatten_params(global_sd).to(device) + avg_update
-        global_sd = server_helper.reconstruct_state_dict(flat_global_new, template_sd)
+        # Safety: Filter out NaNs
+        valid_updates = []
+        for u in client_updates_dense:
+            if not (torch.isnan(u).any() or torch.isinf(u).any()):
+                # Gradient Clipping at Aggregation Level
+                # 防止单次更新幅度过大
+                u = torch.clamp(u, -0.5, 0.5)
+                valid_updates.append(u.to(device))
+            else:
+                print("   [Warning] Skipped a client update due to NaN/Inf.")
+        
+        if not valid_updates:
+            print("   [Error] No valid updates to aggregate! Skipping round update.")
+            # Keep global_sd as is
+        else:
+            client_updates_gpu = valid_updates
+            stack_updates = torch.stack(client_updates_gpu)
+            avg_update = stack_updates.mean(dim=0)
+            flat_global_new = server_helper.flatten_params(global_sd).to(device) + avg_update
+            global_sd = server_helper.reconstruct_state_dict(flat_global_new, template_sd)
         
         # 清理聚合相关的临时变量
         del client_updates_dense
-        del client_updates_gpu
-        del stack_updates
-        del avg_update
-        del flat_global_new
+        if 'client_updates_gpu' in locals(): del client_updates_gpu
+        if 'stack_updates' in locals(): del stack_updates
+        if 'avg_update' in locals(): del avg_update
+        if 'flat_global_new' in locals(): del flat_global_new
         torch.cuda.empty_cache()
 
         # == 评估 ==
@@ -559,16 +620,21 @@ def run_federated_flq(
         try:
             torch.cuda.empty_cache()
             gc.collect()
+            # 使用 deepcopy 确保参数安全
             val_model = YOLO(str(model_path_to_use))
-            val_model.model.load_state_dict(global_sd)
+            val_sd = {k: v.cpu().clone() for k, v in global_sd.items()}
+            val_model.model.load_state_dict(val_sd)
+            
             results = val_model.val(
                 data=str(val_yaml), batch=batch, device=device,
                 verbose=False, plots=False
             )
             metrics["mAP50"] = results.results_dict.get("metrics/mAP50(B)", 0.0)
             metrics["mAP50-95"] = results.results_dict.get("metrics/mAP50-95(B)", 0.0)
+            
             # 更彻底的清理
             del results
+            del val_sd
             del val_model.model
             del val_model
             gc.collect()

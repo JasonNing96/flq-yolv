@@ -181,7 +181,7 @@ class CentralizedTrainer:
         print(f"[Train] Starting centralized training for {epochs} epochs (from epoch {start_epoch})...")
         
         # 预先创建验证用的 YOLO wrapper（避免每个epoch都创建）
-        val_wrapper = None
+        # val_wrapper = None  <-- 移除此行，改为局部变量
         
         try:
             for epoch in range(start_epoch, epochs):
@@ -236,12 +236,11 @@ class CentralizedTrainer:
                         model.eval()  # 切换到评估模式
                         torch.cuda.empty_cache()  # 验证前清理
                         
-                        # 只在第一次验证时创建 wrapper，后续复用
-                        if val_wrapper is None:
-                            val_wrapper = YOLO(self.model_path)
+                        # 每次验证重新创建 wrapper，避免状态残留和潜在的 Inplace Error
+                        val_wrapper = YOLO(self.model_path)
                         
                         # 加载当前权重
-                        # 使用 deepcopy 确保不影响原模型，且避免 inplace update 问题
+                        # 使用 deepcopy 确保不影响原模型
                         state_dict = {k: v.cpu().clone() for k, v in model.state_dict().items()}
                         val_wrapper.model.load_state_dict(state_dict)
                         
@@ -259,6 +258,7 @@ class CentralizedTrainer:
                         # 清理验证结果
                         del results
                         del state_dict
+                        del val_wrapper  # 显式删除 wrapper
                         torch.cuda.empty_cache()
                         gc.collect()
                         
@@ -295,8 +295,6 @@ class CentralizedTrainer:
         except KeyboardInterrupt:
             print("\n[Interrupted] Saving checkpoint before exit...")
             self.save_checkpoint(model, optimizer, scheduler, scaler, epoch, best_map, out_dir)
-            if val_wrapper is not None:
-                del val_wrapper
             torch.cuda.empty_cache()
             raise
         except Exception as e:
@@ -305,15 +303,11 @@ class CentralizedTrainer:
             traceback.print_exc()
             print("[Error] Saving checkpoint before exit...")
             self.save_checkpoint(model, optimizer, scheduler, scaler, epoch, best_map, out_dir)
-            if val_wrapper is not None:
-                del val_wrapper
             torch.cuda.empty_cache()
             raise
         finally:
-            # 确保清理验证 wrapper
-            if val_wrapper is not None:
-                del val_wrapper
-                torch.cuda.empty_cache()
+            # 清理
+            torch.cuda.empty_cache()
                 
         torch.save(model.state_dict(), out_dir / "last_central.pt")
         print(f"Done. Best mAP50: {best_map:.4f}")

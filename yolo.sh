@@ -11,7 +11,8 @@ python flq_yolov_v6.py \
   --model ./models/yolov8s.pt \
   --rounds 200 \
   --local-epochs 1 \
-  --bits 8 \
+  --bits 32 \
+  --no-resume
 
 # 当前状况
 # v8s 效果最好，map50 ~ 0.758, 我在思考提高epoch 或者 使用yolov8m 是否可以有效提高精度和凸显低比特算法效率。 

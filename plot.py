@@ -353,16 +353,15 @@ def main():
     # 1. 加载数据
     if args.lang == "CN":
         experiments = {
-            "集中式基准 (YOLOv8s)": "results/central_manual_v8s/central_log.csv",
-            "FedAvg (YOLOv8s, 32位, 1 Epoch)": "results/runs_flq_v6_yolov8s_32bit_1epoch/experiment_data.csv",
-            "FedAvg-量化 (YOLOv8s, 8位, 1 Epoch)": "results/runs_flq_v6_yolov8s_8bit_1epochs/experiment_data.csv",
-            "本文方法 (YOLOv8n, 8位, 1 Epoch)": "results/runs_flq_v8_yolov8s_8bit_1epoch/experiment_data.csv",
+            "集中式基准 (YOLOv8s)": "results/central_manual_3/central_log.csv",
+            "FedAvg (YOLOv8s, 32位, 1 Epoch)": "results/runs_flq_v6_yolov8s_32bit_1epoch_back/experiment_data.csv",
+            "本文方法 (YOLOv8s, 8位, 1 Epoch)": "results/runs_flq_v8_yolov8s_8bit_1epoch/experiment_data.csv",
         }
     else:
         experiments = {
             "Centralized (YOLOv8s)": "results/central_manual_v8s/central_log.csv",
             "FedAvg (YOLOv8s, 32-bit)": "results/runs_flq_v6_yolov8s_32bit_1epoch/experiment_data.csv",
-            "FedAvg-Quant (YOLOv8s, 8-bit)": "results/runs_flq_v6_yolov8s_8bit_1epochs/experiment_data.csv",
+            "FedAvg-Quant (YOLOv8s, 8-bit)": "results/runs_flq_v6_yolov8s_8bit_1epoch/experiment_data.csv",
             "Ours (YOLOv8n, 8-bit)": "results/runs_flq_v8_yolov8n_8bit_1epoch/experiment_data.csv",
         }
         
